@@ -299,6 +299,23 @@
     let allUsers = [];
     let allKeys = [];
 
+    function updateRoleDropdowns() {
+      const role = getRole() || 'admin';
+      const options = ['<option value="user">User</option>'];
+      if (role === 'owner' || role === 'super_owner') options.push('<option value="admin">Admin</option>');
+      if (role === 'super_owner') options.push('<option value="owner">Owner</option>');
+      document.getElementById('cu-role').innerHTML = options.join('');
+      document.getElementById('eu-role').innerHTML = options.join('');
+    }
+
+    function canModify(targetRole) {
+      const myRole = getRole();
+      if (myRole === 'super_owner') return true;
+      if (myRole === 'owner' && (targetRole === 'admin' || targetRole === 'user' || !targetRole)) return true;
+      if (myRole === 'admin' && (targetRole === 'user' || !targetRole)) return true;
+      return false;
+    }
+
     function switchAdminTab(tab, el) {
       document.querySelectorAll('.nav-item[id^="anav-"]').forEach(n => n.classList.remove('active'));
       document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
@@ -332,15 +349,15 @@
           <td style="color:var(--text-3);">#${u._id.slice(-6)}</td>
           <td style="font-weight:600;">${u.username}</td>
           <td><span class="mono">${u.password_plain || '—'}</span></td>
-          <td><span class="badge ${u.role === 'admin' ? 'badge-violet' : 'badge-info'}">${u.role}</span></td>
+          <td><span class="badge ${u.role === 'super_owner' ? 'badge-danger' : u.role === 'owner' ? 'badge-violet' : u.role === 'admin' ? 'badge-info' : 'badge-warning'}">${u.role}</span></td>
           <td>${u.key_string ? `<span class="key-pill">${u.key_string}</span>` : '<span style="color:var(--text-3);">—</span>'}</td>
           <td style="font-size:0.8rem;">${u.expires_at ? new Date(u.expires_at).toLocaleDateString('it-IT') : '<span style="color:var(--cyan)">♾ Lifetime</span>'}</td>
           <td><span class="badge ${u.key_status === 'assigned' ? 'badge-success' : (u.key_status === 'revoked' ? 'badge-danger' : 'badge-warning')}">${u.key_status || '—'}</span></td>
           <td><span class="badge ${u.is_online ? 'badge-success' : 'badge-danger'}">${u.is_online ? 'Online' : 'Offline'}</span></td>
           <td><span class="badge ${u.is_injected ? 'badge-violet' : 'badge-warning'}">${u.is_injected ? 'Yes' : 'No'}</span></td>
           <td class="action-cell">
-            <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>
+            ${canModify(u.role) ? `<button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>` : '<span style="color:var(--text-3);font-size:0.75rem;">Locked</span>'}
           </td>
         </tr>
       `).join('');
@@ -528,6 +545,7 @@
     }
 
     // Init
+    updateRoleDropdowns();
     loadStats();
     setInterval(loadStats, 30000);
     function toggleSidebar() {

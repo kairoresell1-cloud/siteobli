@@ -16,11 +16,27 @@ function authMiddleware(req, res, next) {
   }
 }
 
-function adminOnly(req, res, next) {
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden' });
+function requireAtLeastAdmin(req, res, next) {
+  const allowed = ['admin', 'owner', 'super_owner'];
+  if (!allowed.includes(req.user?.role)) {
+    return res.status(403).json({ error: 'Forbidden: requires admin access' });
   }
   next();
 }
 
-module.exports = { authMiddleware, adminOnly, JWT_SECRET };
+function requireAtLeastOwner(req, res, next) {
+  const allowed = ['owner', 'super_owner'];
+  if (!allowed.includes(req.user?.role)) {
+    return res.status(403).json({ error: 'Forbidden: requires owner access' });
+  }
+  next();
+}
+
+function requireSuperOwner(req, res, next) {
+  if (req.user?.role !== 'super_owner') {
+    return res.status(403).json({ error: 'Forbidden: requires super owner access' });
+  }
+  next();
+}
+
+module.exports = { authMiddleware, requireAtLeastAdmin, requireAtLeastOwner, requireSuperOwner, JWT_SECRET };
