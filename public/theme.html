@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBLIVION — Theme</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+    .theme-card {
+      border-radius: var(--radius-xl);
+      border: 2px solid var(--glass-border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    .theme-card.selected { border-color: var(--violet); box-shadow: 0 0 30px rgba(124,58,237,0.4); }
+    .theme-card:hover { transform: translateY(-4px); border-color: var(--glass-border-glow); }
+    .theme-preview {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-preview-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.5;
+    }
+    .theme-info { padding: 1.25rem; background: var(--bg-2); }
+    .theme-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .theme-desc { font-size: 0.8rem; color: var(--text-2); }
+    .theme-badge {
+      position: absolute;
+      top: 0.75rem; right: 0.75rem;
+      background: var(--gradient);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: none;
+    }
+    .theme-card.selected .theme-badge { display: block; }
+    .theme-swatches { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
+    .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); }
+    .theme-preview-logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      z-index: 1;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="animated-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+          <img src="/images/logo.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 10px rgba(124,58,237,0.6));"/>
+        </div>
+        <span class="sidebar-logo-text">OBLIVION</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item"><svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <a href="/configs" class="nav-item"><svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Configs</a>
+        <a href="/settings" class="nav-item"><svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Settings</a>
+        <a href="/theme" class="nav-item active"><svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z"/></svg>Theme</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button onclick="logout()" class="nav-item w-full" style="color:var(--danger);">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+      <div class="topbar">
+        <button class="mobile-toggle" onclick="toggleSidebar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div style="position:absolute;left:50%;transform:translateX(-50%);font-size:1rem;font-weight:800;letter-spacing:0.12em;pointer-events:none;">OBLIVION</div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-left:auto;">
+          <h2 style="font-size:1rem;font-weight:700;" class="desktop-only">Theme</h2>
+          <span style="font-size:0.8rem;color:var(--text-2);" class="desktop-only">Changes apply instantly</span>
+        </div>
+      </div>
+      <div class="page-content page-enter">
+        <div class="section-header mb-3">
+          <div>
+            <h2>Choose Your Theme</h2>
+            <p style="margin-top:0.25rem;">Personalize your Oblivion experience</p>
+          </div>
+        </div>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+    </main>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="/js/auth.js"></script>
+  <script>
+    requireAuth();
+    const themes = [
+      {
+        id: 'default',
+        name: 'Oblivion Default',
+        desc: 'Electric violet meets deep cyan. The classic.',
+        colors: ['#7C3AED', '#06B6D4', '#0A0A0F'],
+        bg: 'linear-gradient(135deg, #0A0A0F 0%, #1A0A2E 50%, #0A1A2E 100%)',
+        orb1: '#7C3AED', orb2: '#06B6D4'
+      },
+      {
+        id: 'bloodmoon',
+        name: 'Blood Moon',
+        desc: 'Deep crimson and burning ember. For the hunters.',
+        colors: ['#DC2626', '#F97316', '#0F0505'],
+        bg: 'linear-gradient(135deg, #0F0505 0%, #2E0A0A 50%, #1A0A00 100%)',
+        orb1: '#DC2626', orb2: '#F97316'
+      },
+      {
+        id: 'summer',
+        name: 'Summer Vibes ☀️',
+        desc: 'Sun-drenched shores, colorful umbrellas, salty breeze. Play dirty, look fresh.',
+        colors: ['#FF6B35', '#FFD23F', '#0A1628'],
+        bg: 'linear-gradient(135deg, #0A1628 0%, #1A3360 40%, #0D2A4E 100%)',
+        orb1: '#FF6B35', orb2: '#FFD23F'
+      },
+      {
+        id: 'ghost',
+        name: 'Ghost (Light)',
+        desc: 'Clean, surgical white and slate gray. For the minimalists.',
+        colors: ['#64748B', '#334155', '#F8FAFC'],
+        bg: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #CBD5E1 100%)',
+        orb1: '#94A3B8', orb2: '#475569'
+      },
+      {
+        id: 'sakura',
+        name: 'Sakura',
+        desc: 'Cherry blossoms on a dark night sky. Deadly beautiful. Silent as a blade.',
+        colors: ['#F472B6', '#EC4899', '#0D0810'],
+        bg: 'linear-gradient(135deg, #0D0810 0%, #1F0A18 50%, #150D1A 100%)',
+        orb1: '#F472B6', orb2: '#A855F7'
+      }
+    ];
+
+    const currentTheme = localStorage.getItem('ob_theme') || 'default';
+
+    function applyTheme(id) {
+      if (id === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.removeItem('ob_theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', id);
+        localStorage.setItem('ob_theme', id);
+      }
+      document.querySelectorAll('.theme-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.theme === id);
+      });
+      toast('Theme applied: ' + themes.find(t => t.id === id).name, 'success');
+    }
+
+    function renderThemes() {
+      const grid = document.getElementById('themeGrid');
+      grid.innerHTML = themes.map(t => `
+        <div class="theme-card ${currentTheme === t.id || (t.id === 'default' && !currentTheme) ? 'selected' : ''}" data-theme="${t.id}" onclick="applyTheme('${t.id}')">
+          <div class="theme-preview" style="background:${t.bg}">
+            <div class="theme-preview-orb" style="width:150px;height:150px;background:${t.orb1};top:-30px;left:-30px;"></div>
+            <div class="theme-preview-orb" style="width:100px;height:100px;background:${t.orb2};bottom:-20px;right:-20px;"></div>
+            ${t.id === 'summer' ? `
+              <div style="position:absolute;font-size:1.8rem;bottom:8px;right:12px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">⛱️</div>
+              <div style="position:absolute;font-size:1.2rem;bottom:10px;left:14px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">🌊</div>
+              <div style="position:absolute;font-size:1rem;top:8px;right:16px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">☀️</div>
+            ` : t.id === 'sakura' ? `
+              <div style="position:absolute;font-size:1.5rem;top:8px;right:12px;animation:sakuraDrift 3s ease-in-out infinite;">🌸</div>
+              <div style="position:absolute;font-size:1rem;top:18px;left:14px;opacity:0.85;animation:sakuraDrift 4s ease-in-out infinite reverse;">🌸</div>
+              <div style="position:absolute;font-size:0.85rem;bottom:12px;right:30px;opacity:0.7;animation:sakuraDrift 2.5s ease-in-out infinite;">🌸</div>
+              <div style="position:absolute;font-size:1.1rem;bottom:8px;left:20px;opacity:0.6;animation:sakuraDrift 3.5s ease-in-out infinite reverse;">🌸</div>
+            ` : ''}
+            <div class="theme-preview-logo" style="background:linear-gradient(135deg,${t.colors[0]},${t.colors[1]});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">OBLIVION</div>
+          </div>
+          <div class="theme-badge">Active</div>
+          <div class="theme-info">
+            <div class="theme-name">${t.name}</div>
+            <div class="theme-desc">${t.desc}</div>
+            <div class="theme-swatches">
+              ${t.colors.map(c => `<div class="swatch" style="background:${c}"></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    renderThemes();
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const ov = document.getElementById('sidebarOverlay');
+      sb.classList.toggle('open');
+      ov.classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('open');
+    }
+  </script>
+  <style>
+    @keyframes sakuraDrift {
+      0%,100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-6px) rotate(5deg); }
+    }
+  </style>
+</body>
+</html>

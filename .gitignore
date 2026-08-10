@@ -1,0 +1,4 @@
+node_modules/
+oblivion.db
+.env
+*.log
