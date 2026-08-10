@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { users, keys, logs, generateKeyString } = require('../database');
-const { authMiddleware, adminOnly } = require('../middleware/auth');
+const { authMiddleware, requireAtLeastAdmin, requireAtLeastOwner, requireSuperOwner } = require('../middleware/auth');
 
-router.use(authMiddleware, adminOnly);
+router.use(authMiddleware, requireAtLeastAdmin);
 
 // --- STATS ---
 router.get('/stats', async (req, res) => {
@@ -30,6 +30,10 @@ router.get('/users', async (req, res) => {
 router.post('/users', async (req, res) => {
   const { username, password, role, expires_at } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
+  
+  const requesterRole = req.user.role;
+  if (role === 'owner' && requesterRole !== 'super_owner') return res.status(403).json({ error: 'Only Super Owner can create Owners' });
+  if (role === 'admin' && !['owner', 'super_owner'].includes(requesterRole)) return res.status(403).json({ error: 'Only Owners can create Admins' });
   const hash = bcrypt.hashSync(password, 10);
   try {
     const doc = await users.insert({
@@ -54,7 +58,20 @@ router.post('/users', async (req, res) => {
 });
 
 router.put('/users/:id', async (req, res) => {
+  const targetUser = await users.findOne({ _id: req.params.id });
+  if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+  const requesterRole = req.user.role;
+  if (targetUser.role === 'owner' && requesterRole !== 'super_owner') return res.status(403).json({ error: 'Only Super Owner can modify Owners' });
+  if (targetUser.role === 'admin' && !['owner', 'super_owner'].includes(requesterRole)) return res.status(403).json({ error: 'Only Owners can modify Admins' });
+
   const { username, password, role, is_injected } = req.body;
+  
+  if (role && role !== targetUser.role) {
+    if (role === 'owner' && requesterRole !== 'super_owner') return res.status(403).json({ error: 'Only Super Owner can promote to Owner' });
+    if (role === 'admin' && !['owner', 'super_owner'].includes(requesterRole)) return res.status(403).json({ error: 'Only Owners can promote to Admin' });
+  }
+
   const update = {};
   if (username) update.username = username;
   if (role) update.role = role;
@@ -68,6 +85,13 @@ router.put('/users/:id', async (req, res) => {
 });
 
 router.delete('/users/:id', async (req, res) => {
+  const targetUser = await users.findOne({ _id: req.params.id });
+  if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+  const requesterRole = req.user.role;
+  if (targetUser.role === 'owner' && requesterRole !== 'super_owner') return res.status(403).json({ error: 'Only Super Owner can delete Owners' });
+  if (targetUser.role === 'admin' && !['owner', 'super_owner'].includes(requesterRole)) return res.status(403).json({ error: 'Only Owners can delete Admins' });
+
   await keys.remove({ user_id: req.params.id }, { multi: true });
   await users.remove({ _id: req.params.id });
   res.json({ ok: true });

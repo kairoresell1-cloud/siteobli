@@ -15,7 +15,8 @@ function requireAdmin() {
   const token = requireAuth();
   if (!token) return null;
   const role = getRole();
-  if (role !== 'admin') { window.location.href = '/dashboard'; return null; }
+  const allowed = ['admin', 'owner', 'super_owner'];
+  if (!allowed.includes(role)) { window.location.href = '/dashboard'; return null; }
   return token;
 }
 
@@ -62,7 +63,9 @@ if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
 
 // Inject Admin Panel link in sidebar
 document.addEventListener('DOMContentLoaded', () => {
-  if (getRole() === 'admin' && !window.location.pathname.startsWith('/admin')) {
+  const role = getRole();
+  const allowedAdminRoles = ['admin', 'owner', 'super_owner'];
+  if (allowedAdminRoles.includes(role) && !window.location.pathname.startsWith('/admin')) {
     const nav = document.querySelector('.sidebar-nav');
     if (nav) {
       const adminLink = document.createElement('a');
