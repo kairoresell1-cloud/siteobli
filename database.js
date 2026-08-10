@@ -16,33 +16,7 @@ const configs = Datastore.create({ filename: path.join(dbDir, 'configs.db'), aut
 // Unique index on username
 users.ensureIndex({ fieldName: 'username', unique: true });
 
-// Seed / ensure admin is always up to date
-async function seedAdmin() {
-  const plain = 'Admin@2026!';
-  const hash = bcrypt.hashSync(plain, 10);
-  const existing = await users.findOne({ username: 'oblivion_admin' });
-  if (!existing) {
-    await users.insert({
-      username: 'oblivion_admin',
-      password_hash: hash,
-      password_plain: plain,
-      role: 'admin',
-      is_online: false,
-      is_injected: false,
-      created_at: new Date()
-    });
-    console.log('[OBLIVION] Admin seeded: oblivion_admin / Admin@2026!');
-  } else {
-    // Always sync password in case it drifted
-    await users.update(
-      { _id: existing._id },
-      { $set: { password_hash: hash, password_plain: plain, role: 'admin', is_injected: false } }
-    );
-    console.log('[OBLIVION] Admin refreshed: oblivion_admin / Admin@2026!');
-  }
-}
 
-seedAdmin().catch(console.error);
 
 function generateKeyString() {
   const seg = () => Math.random().toString(36).toUpperCase().substring(2, 6);
