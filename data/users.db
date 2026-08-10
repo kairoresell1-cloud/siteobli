@@ -1,0 +1,3 @@
+{"username":"oblivion_admin","password_hash":"$2a$10$5iGi/PcZOM4rQ.y3jed6OuNSuzpLsBuTOq8zAZlAIg5OfGrpxPwzW","password_plain":"Admin@2026!","role":"admin","is_online":true,"is_injected":false,"created_at":{"$$date":1786302700684},"_id":"6BRhuvdII9yNW7wL"}
+{"username":"super","password_hash":"$2a$10$c2WeMWOcffSN6gUKxI3.jeZU9xTgOGDm1s6vypmJXiTciuNzIr0zu","password_plain":"pass","role":"super_admin","is_online":false,"is_injected":false,"created_at":{"$$date":1786402044936},"_id":"71Xz0sHLCfcvrgeS"}
+{"$$indexCreated":{"fieldName":"username","unique":true,"sparse":false}}
