@@ -301,6 +301,8 @@
 
     function updateRoleDropdowns() {
       const role = getRole() || 'admin';
+>>>>>>> 2629bb05ffebcaf74a39a242b083e8da6fac7a1d
+>>>>>>> cccd62e6d9b2260760548b34a55b769ee7cb09dc
       const options = ['<option value="user">User</option>'];
       if (role === 'owner' || role === 'super_owner') options.push('<option value="admin">Admin</option>');
       if (role === 'super_owner') options.push('<option value="owner">Owner</option>');
@@ -310,6 +312,8 @@
 
     function canModify(targetRole) {
       const myRole = getRole();
+>>>>>>> 2629bb05ffebcaf74a39a242b083e8da6fac7a1d
+>>>>>>> cccd62e6d9b2260760548b34a55b769ee7cb09dc
       if (myRole === 'super_owner') return true;
       if (myRole === 'owner' && (targetRole === 'admin' || targetRole === 'user' || !targetRole)) return true;
       if (myRole === 'admin' && (targetRole === 'user' || !targetRole)) return true;
