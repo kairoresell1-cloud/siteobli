@@ -300,7 +300,11 @@
     let allKeys = [];
 
     function updateRoleDropdowns() {
+<<<<<<< HEAD
       const role = getRole() || 'admin';
+=======
+      const role = localStorage.getItem('role') || 'admin';
+>>>>>>> ee8871d1545c12ee239c1c9eecbcec960ba9d629
       const options = ['<option value="user">User</option>'];
       if (role === 'owner' || role === 'super_owner') options.push('<option value="admin">Admin</option>');
       if (role === 'super_owner') options.push('<option value="owner">Owner</option>');
@@ -309,7 +313,11 @@
     }
 
     function canModify(targetRole) {
+<<<<<<< HEAD
       const myRole = getRole();
+=======
+      const myRole = localStorage.getItem('role');
+>>>>>>> ee8871d1545c12ee239c1c9eecbcec960ba9d629
       if (myRole === 'super_owner') return true;
       if (myRole === 'owner' && (targetRole === 'admin' || targetRole === 'user' || !targetRole)) return true;
       if (myRole === 'admin' && (targetRole === 'user' || !targetRole)) return true;
