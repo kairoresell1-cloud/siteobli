@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBLIVION — Dashboard</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .user-info-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 520px;
+      position: relative;
+      overflow: hidden;
+    }
+    .user-info-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient);
+    }
+    .user-avatar {
+      width: 56px; height: 56px;
+      background: var(--gradient);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(124,58,237,0.4);
+    }
+    .user-info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .info-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .info-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.03em;
+    }
+    .key-expiry-card {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+    }
+    .countdown {
+      font-size: 2.5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.05em;
+    }
+    .countdown-label { font-size: 0.75rem; color: var(--text-2); margin-top: 0.25rem; }
+    .expiry-date { font-size: 0.85rem; color: var(--text-2); margin-top: 0.5rem; }
+    .key-string-box {
+      background: rgba(6,182,212,0.07);
+      border: 1px solid rgba(6,182,212,0.2);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: var(--cyan-light);
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .user-info-card { max-width: 100%; }
+    }
+    /* Mobile — inject button full width, bigger tap target */
+    @media (max-width: 600px) {
+      .inject-btn {
+        max-width: 100% !important;
+        height: 64px !important;
+        font-size: 1rem !important;
+        letter-spacing: 0.15em !important;
+        border-radius: 16px !important;
+      }
+      .inject-btn .inject-logo {
+        width: 26px !important; height: 26px !important;
+      }
+      .inject-progress-wrap { max-width: 100% !important; }
+      .inject-section { margin-top: 1.25rem; gap: 0.6rem; }
+      .countdown { font-size: 2rem !important; }
+      .user-avatar { width: 48px !important; height: 48px !important; font-size: 1.2rem !important; }
+    }
+    .no-key {
+      color: var(--danger);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+    /* ===== INJECT BUTTON — CINEMATIC REDESIGN ===== */
+    .inject-section {
+      margin-top: 1.5rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .inject-btn {
+      width: 100%; max-width: 320px;
+      height: 58px;
+      border-radius: 14px;
+      background: var(--gradient);
+      border: none;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-weight: 800; font-size: 0.9rem; letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(124,58,237,0.35), 0 1px 0 rgba(255,255,255,0.08) inset;
+      /* Better touch target on mobile */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .inject-logo {
+      width: 22px; height: 22px;
+      object-fit: contain;
+      filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,0.6));
+      flex-shrink: 0;
+    }
+    .inject-btn::before {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+    .inject-btn:hover:not(:disabled)::before { left: 160%; }
+    .inject-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(124,58,237,0.5), 0 1px 0 rgba(255,255,255,0.12) inset;
+    }
+    .inject-btn:active:not(:disabled) { transform: translateY(0); }
+    .inject-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .inject-btn.loading {
+      background: linear-gradient(135deg, #1e1e2e, #2d2d44);
+      cursor: not-allowed;
+      animation: loadingPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes loadingPulse {
+      0%,100% { box-shadow: 0 4px 24px rgba(124,58,237,0.2); }
+      50% { box-shadow: 0 4px 32px rgba(124,58,237,0.5); }
+    }
+    .inject-btn.injected {
+      background: linear-gradient(135deg, #065f46, #059669);
+      box-shadow: 0 4px 24px rgba(16,185,129,0.35);
+      cursor: not-allowed;
+    }
+    /* Scanning line that sweeps across during load */
+    .inject-btn.loading::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent);
+      animation: scanLine 1.2s ease-in-out infinite;
+    }
+    @keyframes scanLine {
+      0% { left: -60%; }
+      100% { left: 120%; }
+    }
+    /* Process log text below button */
+    .inject-log {
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: var(--text-3);
+      letter-spacing: 0.04em;
+      text-align: center;
+      min-height: 1.1rem;
+      transition: opacity 0.3s;
+    }
+    .inject-log.active { color: var(--violet-light); }
+    .inject-log.success { color: var(--success); }
+    /* Progress bar */
+    .inject-progress-wrap {
+      width: 100%; max-width: 320px;
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .inject-progress-wrap.active { opacity: 1; }
+    .inject-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--gradient);
+      border-radius: 2px;
+      transition: width 0.15s ease;
+    }
+    .inject-progress-bar.success { background: linear-gradient(90deg, #059669, #10B981); }
+    /* Ripple */
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      width: 10px; height: 10px;
+      transform: scale(0); animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim { to { transform: scale(30); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div class="animated-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+          <img src="/images/logo.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 10px rgba(124,58,237,0.6));"/>
+        </div>
+        <span class="sidebar-logo-text">OBLIVION</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item active" id="nav-dashboard">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="/configs" class="nav-item" id="nav-configs">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          Configs
+        </a>
+        <a href="/settings" class="nav-item" id="nav-settings">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Settings
+        </a>
+        <a href="/theme" class="nav-item" id="nav-theme">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z"/></svg>
+          Theme
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button onclick="logout()" class="nav-item w-full" style="color:var(--danger);">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- Sidebar overlay (tap outside to close) -->
+      <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+      <div class="topbar">
+        <button class="mobile-toggle" onclick="toggleSidebar()" id="menuBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <!-- Centered title on mobile -->
+        <div style="position:absolute;left:50%;transform:translateX(-50%);font-size:1rem;font-weight:800;letter-spacing:0.12em;pointer-events:none;">OBLIVION</div>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-left:auto;">
+          <div id="userBadge" style="display:flex;align-items:center;gap:0.5rem;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:0.4rem 0.875rem;font-size:0.85rem;font-weight:600;"></div>
+        </div>
+      </div>
+
+      <div class="page-content page-enter">
+        <div class="dashboard-grid">
+          <!-- USER INFO CARD -->
+          <div class="user-info-card">
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div class="user-avatar" id="avatarEl">?</div>
+              <div>
+                <div style="font-size:1.25rem;font-weight:800;" id="usernameEl">Loading...</div>
+                <div style="font-size:0.8rem;color:var(--text-2);">Active Session</div>
+              </div>
+            </div>
+
+            <div class="user-info-row">
+              <div class="info-label">Username</div>
+              <div class="info-value" id="displayUsername">—</div>
+            </div>
+
+            <div class="user-info-row">
+              <div class="info-label">Password</div>
+              <div class="input-wrapper">
+                <input class="input" type="password" id="displayPassword" value="" readonly style="cursor:default;letter-spacing:0.05em;"/>
+                <span class="input-icon-right" id="toggleDisplayPwd">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div class="user-info-row">
+              <div class="info-label">License Key</div>
+              <div class="key-string-box" id="keyStringEl">
+                <span>No key assigned</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KEY EXPIRY CARD -->
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div class="key-expiry-card">
+              <div class="info-label" style="margin-bottom:0.5rem;">Key Expires In</div>
+              <div class="countdown" id="countdownEl">--:--:--</div>
+              <div class="countdown-label" id="countdownLabel">Loading expiry...</div>
+              <div class="expiry-date" id="expiryDate"></div>
+            </div>
+
+            <div class="card" style="flex:1;">
+              <div class="info-label" style="margin-bottom:1rem;">Session Status</div>
+              <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.85rem;">Authentication</span>
+                  <span class="badge badge-success">Active</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.85rem;">Injection Status</span>
+                  <span class="badge" id="injectBadge">—</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:0.85rem;">Key Status</span>
+                  <span class="badge" id="keyStatusBadge">—</span>
+                </div>
+              </div>
+              <div class="inject-section">
+                <button class="inject-btn" id="injectBtn" onclick="injectCheat(event)">
+                  <img class="inject-logo" id="injectLogo" src="/images/logo.png" alt=""/>
+                  <span id="injectBtnText">INJECT</span>
+                </button>
+                <div class="inject-progress-wrap" id="injectProgressWrap">
+                  <div class="inject-progress-bar" id="injectProgressBar"></div>
+                </div>
+                <div class="inject-log" id="injectLog">Awaiting command...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    requireAuth();
+
+    document.getElementById('toggleDisplayPwd').addEventListener('click', () => {
+      const el = document.getElementById('displayPassword');
+      el.type = el.type === 'password' ? 'text' : 'password';
+    });
+
+    async function loadDashboard() {
+      try {
+        const res = await apiFetch('/api/me');
+        const { user, key } = await res.json();
+
+        document.getElementById('avatarEl').textContent = user.username[0].toUpperCase();
+        document.getElementById('usernameEl').textContent = user.username;
+        document.getElementById('displayUsername').textContent = user.username;
+        document.getElementById('displayPassword').value = user.password_plain;
+        document.getElementById('userBadge').innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          ${user.username}
+        `;
+
+        // Inject state — mirror real DB state
+        const injBadge = document.getElementById('injectBadge');
+        const injectBtn = document.getElementById('injectBtn');
+        const injectLog = document.getElementById('injectLog');
+        if (user.is_injected) {
+          injBadge.className = 'badge badge-violet'; injBadge.textContent = 'Injected';
+          injectBtn.classList.add('injected');
+          injectBtn.disabled = true;
+          document.getElementById('injectBtnText').textContent = 'OBLIVION ACTIVE';
+          // hide logo when active to give more text room
+          document.getElementById('injectLogo').style.display = 'none';
+          injectLog.className = 'inject-log success';
+          injectLog.textContent = '> oblivion — running | pid: ' + Math.floor(Math.random()*90000+10000);
+        } else {
+          injBadge.className = 'badge badge-warning'; injBadge.textContent = 'Not Injected';
+          injectBtn.classList.remove('injected', 'loading');
+          injectBtn.disabled = false;
+          document.getElementById('injectBtnText').textContent = 'INJECT';
+          document.getElementById('injectLogo').style.display = '';
+          injectLog.className = 'inject-log';
+          injectLog.textContent = 'Awaiting command...';
+        }
+
+        // Key info
+        if (key) {
+          document.getElementById('keyStringEl').innerHTML = `
+            <span>${key.key_string}</span>
+            <button onclick="navigator.clipboard.writeText('${key.key_string}');toast('Key copied!')" style="background:none;border:none;cursor:pointer;color:var(--cyan-light);font-size:0.75rem;">COPY</button>
+          `;
+
+          const keyStatusBadge = document.getElementById('keyStatusBadge');
+          keyStatusBadge.textContent = key.status;
+          keyStatusBadge.className = 'badge ' + (key.status === 'active' || key.status === 'assigned' ? 'badge-success' : 'badge-danger');
+
+          if (key.expires_at) {
+            const expDate = new Date(key.expires_at);
+            startCountdown(expDate);
+            document.getElementById('expiryDate').textContent =
+              'Expires: ' + expDate.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
+          } else {
+            document.getElementById('countdownEl').textContent = '∞ Lifetime';
+            document.getElementById('countdownLabel').textContent = 'Nessuna scadenza';
+            document.getElementById('expiryDate').textContent = 'Key: Lifetime ♾';
+          }
+        } else {
+          document.getElementById('keyStatusBadge').textContent = 'No Key';
+          document.getElementById('keyStatusBadge').className = 'badge badge-danger';
+          document.getElementById('countdownEl').textContent = '--';
+          document.getElementById('countdownLabel').textContent = 'No license key assigned';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function startCountdown(expiry) {
+      function tick() {
+        const now = new Date();
+        const diff = expiry - now;
+        if (diff <= 0) {
+          document.getElementById('countdownEl').textContent = 'EXPIRED';
+          document.getElementById('countdownLabel').textContent = 'Your key has expired';
+          return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        if (d > 0) {
+          document.getElementById('countdownEl').textContent = `${d}d ${String(h).padStart(2,'0')}h`;
+          document.getElementById('countdownLabel').textContent = `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s remaining`;
+        } else {
+          document.getElementById('countdownEl').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          document.getElementById('countdownLabel').textContent = 'Time remaining on your license';
+        }
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    const INJECT_STEPS = [
+      '> initializing oblivion.core...',
+      '> scanning process list...',
+      '> target acquired: game.exe',
+      '> allocating remote memory...',
+      '> writing shellcode payload...',
+      '> executing remote thread...',
+      '> hooking render pipeline...',
+      '> bypassing integrity check...',
+      '> patching anti-cheat signatures...',
+      '> loading cheat modules...',
+      '> ESP module — OK',
+      '> aimbot module — OK',
+      '> silent aim module — OK',
+      '> injection complete.'
+    ];
+
+    async function injectCheat(event) {
+      const btn = document.getElementById('injectBtn');
+      if (btn.classList.contains('loading') || btn.classList.contains('injected') || btn.disabled) return;
+
+      // Ripple
+      if (event) {
+        const rect = btn.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        ripple.style.left = (event.clientX - rect.left - 5) + 'px';
+        ripple.style.top  = (event.clientY - rect.top  - 5) + 'px';
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 700);
+      }
+
+      const log  = document.getElementById('injectLog');
+      const bar  = document.getElementById('injectProgressBar');
+      const wrap = document.getElementById('injectProgressWrap');
+      const text = document.getElementById('injectBtnText');
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      wrap.classList.add('active');
+      log.className = 'inject-log active';
+
+      // Cycle through process steps visually
+      const stepCount = INJECT_STEPS.length;
+      let stepIdx = 0;
+      const stepInterval = setInterval(() => {
+        if (stepIdx < stepCount) {
+          log.textContent = INJECT_STEPS[stepIdx];
+          bar.style.width = Math.round((stepIdx / (stepCount - 1)) * 85) + '%';
+          stepIdx++;
+        }
+      }, 160);
+
+      text.textContent = 'INJECTING...';
+      document.getElementById('injectLogo').style.display = 'none';
+
+      // Hit the API after steps start
+      const res = await apiFetch('/api/inject', { method: 'POST' });
+
+      // Wait for animation to finish
+      const waitLeft = Math.max(0, stepCount * 160 + 200 - 100);
+      await new Promise(r => setTimeout(r, waitLeft));
+      clearInterval(stepInterval);
+
+      if (res.ok) {
+        bar.style.width = '100%';
+        bar.classList.add('success');
+        log.className = 'inject-log success';
+        log.textContent = '> injection complete. oblivion — running.';
+        text.textContent = 'OBLIVION ACTIVE';
+        document.getElementById('injectLogo').style.display = 'none';
+
+        btn.classList.remove('loading');
+        btn.classList.add('injected');
+        // Reset animation class after 3s so it doesn’t glow forever
+        setTimeout(() => {
+          wrap.classList.remove('active');
+          document.getElementById('injectBadge').className = 'badge badge-violet';
+          document.getElementById('injectBadge').textContent = 'Injected';
+          toast('Oblivion injected. Usa Settings → Close per fermare.', 'success');
+        }, 600);
+      } else {
+        clearInterval(stepInterval);
+        bar.style.width = '0%';
+        wrap.classList.remove('active');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        log.className = 'inject-log';
+        log.textContent = '> error: injection failed. retry.';
+        text.textContent = 'INJECT';
+        document.getElementById('injectLogo').style.display = '';
+        toast('Injection failed', 'error');
+      }
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const ov = document.getElementById('sidebarOverlay');
+      sb.classList.toggle('open');
+      ov.classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('open');
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>
