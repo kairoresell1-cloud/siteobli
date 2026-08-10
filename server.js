@@ -18,7 +18,6 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'log
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'public', 'settings.html')));
 app.get('/configs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'configs.html')));
-app.get('/theme', (req, res) => res.sendFile(path.join(__dirname, 'public', 'theme.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 const PORT = process.env.PORT || 3000;

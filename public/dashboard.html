@@ -231,6 +231,9 @@
       pointer-events: none;
     }
     @keyframes rippleAnim { to { transform: scale(30); opacity: 0; } }
+    
+    /* Game Selector */
+    .game-card:hover { border-color:var(--violet) !important; transform:translateY(-5px); box-shadow:0 10px 30px rgba(124,58,237,0.2); }
   </style>
 </head>
 <body>
@@ -260,10 +263,6 @@
           <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           Settings
         </a>
-        <a href="/theme" class="nav-item" id="nav-theme">
-          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z"/></svg>
-          Theme
-        </a>
       </nav>
       <div class="sidebar-footer">
         <button onclick="logout()" class="nav-item w-full" style="color:var(--danger);">
@@ -274,10 +273,27 @@
     </aside>
 
     <!-- MAIN -->
-    <main class="main">
-      <!-- Sidebar overlay (tap outside to close) -->
-      <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-      <div class="topbar">
+    <main class="main" style="position:relative;">
+      <!-- GAME SELECTOR -->
+      <div id="gameSelector" style="position:absolute;inset:0;background:var(--bg-0);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;">
+        <h2 style="font-size:2rem;font-weight:900;letter-spacing:0.1em;margin-bottom:0.5rem;text-transform:uppercase;">Select Game</h2>
+        <p style="color:var(--text-3);margin-bottom:3rem;">Choose a game to load your dashboard</p>
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;">
+          <div class="game-card" onclick="selectGame('fivem', 'FiveM External')" style="width:240px;background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.3s;">
+            <img src="/images/fivem.png" style="width:80px;height:80px;object-fit:contain;margin-bottom:1rem;filter:drop-shadow(0 0 10px rgba(124,58,237,0.5));" alt="FiveM"/>
+            <h3 style="font-size:1.2rem;font-weight:700;">FiveM External</h3>
+          </div>
+          <div class="game-card" onclick="selectGame('csgo2', 'CS:GO 2 External')" style="width:240px;background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:all 0.3s;">
+            <img src="/images/csgo2.png" style="width:80px;height:80px;object-fit:contain;margin-bottom:1rem;filter:drop-shadow(0 0 10px rgba(6,182,212,0.5));" alt="CS:GO 2"/>
+            <h3 style="font-size:1.2rem;font-weight:700;">CS:GO 2 External</h3>
+          </div>
+        </div>
+      </div>
+
+      <div id="dashboardContent" style="display:none;width:100%;height:100%;overflow-y:auto;flex-direction:column;">
+        <!-- Sidebar overlay (tap outside to close) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+        <div class="topbar">
         <button class="mobile-toggle" onclick="toggleSidebar()" id="menuBtn">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
@@ -365,6 +381,7 @@
           </div>
         </div>
       </div>
+      </div>
     </main>
   </div>
 
@@ -372,25 +389,30 @@
 
   <script src="/js/auth.js"></script>
   <script>
-    requireAuth();
-
     document.getElementById('toggleDisplayPwd').addEventListener('click', () => {
       const el = document.getElementById('displayPassword');
       el.type = el.type === 'password' ? 'text' : 'password';
     });
 
-    async function loadDashboard() {
+    let globalUser = null;
+    let globalKey = null;
+    let selectedGame = null;
+
+    async function init() {
+      requireAuth();
       try {
         const res = await apiFetch('/api/me');
-        const { user, key } = await res.json();
+        const data = await res.json();
+        globalUser = data.user;
+        globalKey = data.key;
 
-        document.getElementById('avatarEl').textContent = user.username[0].toUpperCase();
-        document.getElementById('usernameEl').textContent = user.username;
-        document.getElementById('displayUsername').textContent = user.username;
-        document.getElementById('displayPassword').value = user.password_plain;
+        document.getElementById('avatarEl').textContent = globalUser.username[0].toUpperCase();
+        document.getElementById('usernameEl').textContent = globalUser.username;
+        document.getElementById('displayUsername').textContent = globalUser.username;
+        document.getElementById('displayPassword').value = globalUser.password_plain;
         document.getElementById('userBadge').innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
-          ${user.username}
+          ${globalUser.username}
         `;
 
         // Inject state — mirror real DB state
@@ -445,6 +467,27 @@
         }
       } catch (e) {
         console.error(e);
+      }
+    }
+
+    function selectGame(gameId, gameName) {
+      if (!globalKey || (globalKey.game !== 'global' && globalKey.game !== gameId)) {
+         toast('No license key assigned for ' + gameName, 'error');
+         return;
+      }
+      selectedGame = gameId;
+      document.getElementById('gameSelector').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'flex';
+      
+      // Update UI for the game
+      if (gameId === 'csgo2') {
+         document.getElementById('injectLogo').src = '/images/csgo2.png';
+         document.getElementById('injectLogo').style.filter = 'drop-shadow(0 0 6px rgba(6,182,212,0.6))';
+         document.getElementById('injectBtnText').textContent = 'INJECT CS:GO 2';
+      } else {
+         document.getElementById('injectLogo').src = '/images/fivem.png';
+         document.getElementById('injectLogo').style.filter = 'drop-shadow(0 0 6px rgba(124,58,237,0.6))';
+         document.getElementById('injectBtnText').textContent = 'INJECT FIVEM';
       }
     }
 
@@ -579,7 +622,7 @@
       document.getElementById('sidebarOverlay').classList.remove('open');
     }
 
-    loadDashboard();
+    init();
   </script>
 </body>
 </html>

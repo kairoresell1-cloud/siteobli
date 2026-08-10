@@ -50,6 +50,11 @@
     .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
     .nav-links a { color: var(--text2); text-decoration: none; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.04em; transition: color 0.2s; }
     .nav-links a:hover { color: var(--text); }
+    .dropdown-wrapper { position: relative; }
+    .dropdown-wrapper:hover .dropdown-menu { display: flex; opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .dropdown-menu { opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.2s ease; position: absolute; top: 100%; left: 0; background: rgba(6,6,16,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-top: 1rem; }
+    .dropdown-menu a { font-size: 0.85rem !important; display: block; padding: 0.5rem; border-radius: 6px; }
+    .dropdown-menu a:hover { background: rgba(124,58,237,0.1); color: #fff; }
     .nav-btn {
       background: var(--grad); color: #fff !important; padding: 0.55rem 1.4rem;
       border-radius: 10px; font-weight: 700 !important; letter-spacing: 0.06em;
@@ -294,6 +299,13 @@
     <span class="nav-logo-text">OBLIVION</span>
   </a>
   <ul class="nav-links">
+    <li class="dropdown-wrapper">
+      <a href="#pricing" style="display:flex;align-items:center;gap:4px;">Products <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></a>
+      <div class="dropdown-menu">
+        <a href="#pricing">FiveM External</a>
+        <a href="#pricing">CS:GO 2 External</a>
+      </div>
+    </li>
     <li><a href="#showcase">Showcase</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#pricing">Pricing</a></li>
@@ -305,11 +317,13 @@
   </button>
 </nav>
 <div class="mobile-nav" id="mobileNav">
+  <a href="#pricing" onclick="closeNav()">Products - FiveM</a>
+  <a href="#pricing" onclick="closeNav()">Products - CS:GO 2</a>
   <a href="#showcase" onclick="closeNav()">Showcase</a>
   <a href="#features" onclick="closeNav()">Features</a>
   <a href="#pricing" onclick="closeNav()">Pricing</a>
   <a href="#support" onclick="closeNav()">Support</a>
-  <a href="/login" style="color:#a78bfa;font-weight:700;">Log In →</a>
+  <a href="/login" class="nav-btn" style="text-align:center;margin-top:1rem;">Dashboard</a>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -318,7 +332,7 @@
   <div class="hero-title-wrap">
     <h1 class="hero-title">OBLIVION</h1>
   </div>
-  <p class="hero-sub">The most advanced cheat platform ever engineered. Kernel-level injection, invisible to every anticheat. Built for players who refuse to lose.</p>
+  <p class="hero-sub">The most advanced cheat platform ever engineered. External injection, invisible to every anticheat. Built for players who refuse to lose.</p>
   <div class="hero-ctas">
     <a href="#pricing" class="btn-primary">Get Access Now</a>
     <a href="#showcase" class="btn-ghost">Watch Showcase</a>
@@ -386,8 +400,8 @@
       </div>
       <div class="feat-card reveal" style="transition-delay:.16s">
         <div class="feat-icon">🔮</div>
-        <div class="feat-name">Kernel Injection</div>
-        <div class="feat-desc">Injected at kernel level. No signatures. No traces. No bans. Bypasses every known anticheat system.</div>
+        <div class="feat-name">External Injection</div>
+        <div class="feat-desc">Injected at external level. No signatures. No traces. No bans. Bypasses every known anticheat system.</div>
       </div>
       <div class="feat-card reveal" style="transition-delay:.24s">
         <div class="feat-icon">⚡</div>
@@ -425,7 +439,7 @@
           <li>Community Configs</li>
           <li>Standard support</li>
         </ul>
-        <a href="/login" class="btn-ghost" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">Get Started</a>
+        <a href="/login" class="btn-ghost" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">View Product</a>
       </div>
       <div class="price-card pop reveal" style="transition-delay:.12s">
         <div class="pop-badge">Best Value</div>
@@ -438,7 +452,7 @@
           <li>Priority support</li>
           <li>Early feature access</li>
         </ul>
-        <a href="/login" class="btn-primary" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">Get Started</a>
+        <a href="/login" class="btn-primary" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">View Product</a>
       </div>
       <div class="price-card reveal" style="transition-delay:.24s">
         <div class="price-plan">Lifetime</div>
@@ -450,7 +464,7 @@
           <li>Dedicated support line</li>
           <li>Beta access, always</li>
         </ul>
-        <a href="/login" class="btn-ghost" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">Get Started</a>
+        <a href="/login" class="btn-ghost" style="display:block;border-radius:10px;padding:.8rem;text-align:center;">View Product</a>
       </div>
     </div>
   </div>

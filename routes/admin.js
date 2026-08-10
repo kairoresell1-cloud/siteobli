@@ -42,6 +42,7 @@ router.post('/users', async (req, res) => {
     await keys.insert({
       key_string: keyStr,
       user_id: doc._id,
+      game: req.body.game || 'global',
       expires_at: expires_at ? new Date(expires_at) : null,
       status: 'assigned',
       created_at: new Date()
@@ -97,12 +98,13 @@ router.get('/keys', async (req, res) => {
 });
 
 router.post('/keys/generate', async (req, res) => {
-  const { count = 1, user_id, expires_at } = req.body;
+  const { count = 1, user_id, expires_at, game } = req.body;
   const generated = [];
   for (let i = 0; i < Math.min(count, 100); i++) {
     const keyStr = generateKeyString();
     const doc = await keys.insert({
       key_string: keyStr,
+      game: game || 'global',
       user_id: user_id || null,
       expires_at: expires_at ? new Date(expires_at) : null,
       status: user_id ? 'assigned' : 'available',
