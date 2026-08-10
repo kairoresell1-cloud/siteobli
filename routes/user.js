@@ -10,19 +10,21 @@ router.get('/me', authMiddleware, async (req, res) => {
   // Remove hash for safety
   const { password_hash, ...safeUser } = user;
 
-  const key = await keys.findOne({ user_id: user._id });
-  res.json({ user: safeUser, key: key || null });
+  const userKeys = await keys.find({ user_id: user._id });
+  res.json({ user: safeUser, keys: userKeys });
 });
 
 router.post('/redeem', authMiddleware, async (req, res) => {
   const { key_string } = req.body;
   if (!key_string) return res.status(400).json({ error: 'Key required' });
   
-  const existingKey = await keys.findOne({ user_id: req.user.id });
-  if (existingKey) return res.status(400).json({ error: 'You already have an assigned key' });
-
   const key = await keys.findOne({ key_string, status: 'available' });
   if (!key) return res.status(404).json({ error: 'Invalid or already used key' });
+
+  const existingKeys = await keys.find({ user_id: req.user.id });
+  if (existingKeys.some(k => k.game === key.game || k.game === 'global')) {
+    return res.status(400).json({ error: 'You already have an assigned key for this game' });
+  }
 
   await keys.update({ _id: key._id }, { $set: { user_id: req.user.id, status: 'assigned' } });
   res.json({ ok: true, game: key.game });

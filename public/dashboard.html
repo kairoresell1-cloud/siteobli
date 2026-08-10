@@ -411,8 +411,9 @@
     });
 
     let globalUser = null;
-    let globalKey = null;
+    let globalKeys = [];
     let selectedGame = null;
+    let countdownInterval = null;
 
     async function init() {
       requireAuth();
@@ -420,7 +421,7 @@
         const res = await apiFetch('/api/me');
         const data = await res.json();
         globalUser = data.user;
-        globalKey = data.key;
+        globalKeys = data.keys || [];
 
         document.getElementById('avatarEl').textContent = globalUser.username[0].toUpperCase();
         document.getElementById('usernameEl').textContent = globalUser.username;
@@ -435,7 +436,7 @@
         const injBadge = document.getElementById('injectBadge');
         const injectBtn = document.getElementById('injectBtn');
         const injectLog = document.getElementById('injectLog');
-        if (user.is_injected) {
+        if (globalUser.is_injected) {
           injBadge.className = 'badge badge-violet'; injBadge.textContent = 'Injected';
           injectBtn.classList.add('injected');
           injectBtn.disabled = true;
@@ -454,44 +455,44 @@
           injectLog.textContent = 'Awaiting command...';
         }
 
-        // Key info
-        if (key) {
-          document.getElementById('keyStringEl').innerHTML = `
-            <span>${key.key_string}</span>
-            <button onclick="navigator.clipboard.writeText('${key.key_string}');toast('Key copied!')" style="background:none;border:none;cursor:pointer;color:var(--cyan-light);font-size:0.75rem;">COPY</button>
-          `;
+        // Key info is now handled when a game is selected
 
-          const keyStatusBadge = document.getElementById('keyStatusBadge');
-          keyStatusBadge.textContent = key.status;
-          keyStatusBadge.className = 'badge ' + (key.status === 'active' || key.status === 'assigned' ? 'badge-success' : 'badge-danger');
-
-          if (key.expires_at) {
-            const expDate = new Date(key.expires_at);
-            startCountdown(expDate);
-            document.getElementById('expiryDate').textContent =
-              'Expires: ' + expDate.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
-          } else {
-            document.getElementById('countdownEl').textContent = '∞ Lifetime';
-            document.getElementById('countdownLabel').textContent = 'Nessuna scadenza';
-            document.getElementById('expiryDate').textContent = 'Key: Lifetime ♾';
-          }
-        } else {
-          document.getElementById('keyStatusBadge').textContent = 'No Key';
-          document.getElementById('keyStatusBadge').className = 'badge badge-danger';
-          document.getElementById('countdownEl').textContent = '--';
-          document.getElementById('countdownLabel').textContent = 'No license key assigned';
-        }
       } catch (e) {
         console.error(e);
       }
     }
 
     function selectGame(gameId, gameName) {
-      if (!globalKey || (globalKey.game !== 'global' && globalKey.game !== gameId)) {
+      const gameKey = globalKeys.find(k => k.game === 'global' || k.game === gameId);
+      
+      if (!gameKey) {
          toast('No license key assigned for ' + gameName, 'error');
          return;
       }
       selectedGame = gameId;
+      
+      // Populate Key Info for this specific game
+      document.getElementById('keyStringEl').innerHTML = `
+        <span>${gameKey.key_string}</span>
+        <button onclick="navigator.clipboard.writeText('${gameKey.key_string}');toast('Key copied!')" style="background:none;border:none;cursor:pointer;color:var(--cyan-light);font-size:0.75rem;">COPY</button>
+      `;
+
+      const keyStatusBadge = document.getElementById('keyStatusBadge');
+      keyStatusBadge.textContent = gameKey.status;
+      keyStatusBadge.className = 'badge ' + (gameKey.status === 'active' || gameKey.status === 'assigned' ? 'badge-success' : 'badge-danger');
+
+      if (gameKey.expires_at) {
+        const expDate = new Date(gameKey.expires_at);
+        startCountdown(expDate);
+        document.getElementById('expiryDate').textContent =
+          'Expires: ' + expDate.toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' });
+      } else {
+        clearInterval(countdownInterval);
+        document.getElementById('countdownEl').textContent = '∞ Lifetime';
+        document.getElementById('countdownLabel').textContent = 'Nessuna scadenza';
+        document.getElementById('expiryDate').textContent = 'Key: Lifetime ♾';
+      }
+      
       
       document.getElementById('nav-profile').classList.remove('active');
       document.getElementById('gameNav').style.display = 'flex';
@@ -539,28 +540,29 @@
     }
 
     function startCountdown(expiry) {
+      if (countdownInterval) clearInterval(countdownInterval);
       function tick() {
         const now = new Date();
         const diff = expiry - now;
         if (diff <= 0) {
-          document.getElementById('countdownEl').textContent = 'EXPIRED';
-          document.getElementById('countdownLabel').textContent = 'Your key has expired';
+          document.getElementById('countdownEl').textContent = '00:00:00';
+          document.getElementById('countdownLabel').textContent = 'Scaduta';
+          if (countdownInterval) clearInterval(countdownInterval);
           return;
         }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        if (d > 0) {
-          document.getElementById('countdownEl').textContent = `${d}d ${String(h).padStart(2,'0')}h`;
-          document.getElementById('countdownLabel').textContent = `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s remaining`;
-        } else {
-          document.getElementById('countdownEl').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-          document.getElementById('countdownLabel').textContent = 'Time remaining on your license';
-        }
+        const d = Math.floor(diff/(1000*60*60*24));
+        const h = Math.floor((diff/(1000*60*60))%24).toString().padStart(2,'0');
+        const m = Math.floor((diff/(1000*60))%60).toString().padStart(2,'0');
+        const s = Math.floor((diff/1000)%60).toString().padStart(2,'0');
+
+        let out = '';
+        if (d>0) out += d+'d ';
+        out += `${h}:${m}:${s}`;
+        document.getElementById('countdownEl').textContent = out;
+        document.getElementById('countdownLabel').textContent = 'Tempo rimanente';
       }
       tick();
-      setInterval(tick, 1000);
+      countdownInterval = setInterval(tick, 1000);
     }
 
     const INJECT_STEPS = [

@@ -21,8 +21,14 @@ router.get('/users', async (req, res) => {
   // Join key info
   const result = await Promise.all(allUsers.reverse().map(async u => {
     const { password_hash, ...safe } = u;
-    const key = await keys.findOne({ user_id: u._id });
-    return { ...safe, key_string: key?.key_string, expires_at: key?.expires_at, key_status: key?.status, key_id: key?._id };
+    const userKeys = await keys.find({ user_id: u._id });
+    if (userKeys.length > 1) {
+      return { ...safe, key_string: `[${userKeys.length} Keys]`, expires_at: null, key_status: 'multiple', key_id: null, game: 'multiple' };
+    } else if (userKeys.length === 1) {
+      const key = userKeys[0];
+      return { ...safe, key_string: key.key_string, expires_at: key.expires_at, key_status: key.status, key_id: key._id, game: key.game };
+    }
+    return { ...safe, key_string: null, expires_at: null, key_status: null, key_id: null, game: null };
   }));
   res.json(result);
 });
