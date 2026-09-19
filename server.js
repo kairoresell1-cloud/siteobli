@@ -73,6 +73,26 @@ app.delete('/api/admin/products/:id', authMiddleware, adminOnly, async (req, res
   }
 });
 
+// DEBUG: test endpoint - NO AUTH - visit in browser to test DB
+app.get('/api/debug/products', async (req, res) => {
+  try {
+    // Create a test product
+    const doc = await db.products.insert({
+      title: 'TEST PRODUCT',
+      description: 'If you see this, the DB works',
+      image_url: '',
+      discord_url: 'https://discord.gg/test',
+      order: 0,
+      created_at: new Date()
+    });
+    // Read all products
+    const all = await db.products.find({});
+    res.json({ ok: true, created: doc, total: all.length, all: all });
+  } catch (e) {
+    res.json({ ok: false, error: e.message, stack: e.stack });
+  }
+});
+
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
