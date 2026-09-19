@@ -1,18 +1,77 @@
 const express = require('express');
 const path = require('path');
-require('./database'); // init DB + seed
+const db = require('./database');
+const { authMiddleware, adminOnly } = require('./middleware/auth');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- API ROUTES ---
+// --- EXISTING API ROUTES ---
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/user'));
-app.use('/api/admin', require('./routes/admin'));   // includes /api/admin/products CRUD
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
 app.use('/api', require('./routes/cheatConfig'));
-app.use('/api/products', require('./routes/products')); // public GET only
+
+// --- PRODUCTS API (inline, no separate router) ---
+
+// Public: anyone can list products
+app.get('/api/products', async (req, res) => {
+  try {
+    const all = await db.products.find({});
+    all.sort((a, b) => (a.order || 0) - (b.order || 0));
+    res.json(all);
+  } catch (e) {
+    console.error('[PRODUCTS] GET error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: add product
+app.post('/api/admin/products', authMiddleware, adminOnly, async (req, res) => {
+  console.log('[PRODUCTS] POST body:', JSON.stringify(req.body));
+  try {
+    const { title, description, image_url, discord_url } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    const doc = await db.products.insert({
+      title: title,
+      description: description || '',
+      image_url: image_url || '',
+      discord_url: discord_url || '',
+      order: 0,
+      created_at: new Date()
+    });
+    console.log('[PRODUCTS] Created:', doc._id);
+    res.json({ ok: true, product: doc });
+  } catch (e) {
+    console.error('[PRODUCTS] POST error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: update product
+app.put('/api/admin/products/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { title, description, image_url, discord_url } = req.body;
+    await db.products.update({ _id: req.params.id }, { $set: { title, description, image_url, discord_url } });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[PRODUCTS] PUT error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: delete product
+app.delete('/api/admin/products/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await db.products.remove({ _id: req.params.id }, {});
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[PRODUCTS] DELETE error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
