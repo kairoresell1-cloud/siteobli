@@ -12,13 +12,15 @@ app.use('/api', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
 app.use('/api', require('./routes/cheatConfig'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/admin/products', require('./routes/products'));
 
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'public', 'settings.html')));
 app.get('/configs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'configs.html')));
+app.get('/products', (req, res) => res.sendFile(path.join(__dirname, 'public', 'products.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 const PORT = process.env.PORT || 3000;
