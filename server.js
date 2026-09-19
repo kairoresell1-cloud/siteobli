@@ -9,11 +9,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // --- API ROUTES ---
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/user'));
+app.use('/api/products', require('./routes/products'));        // public GET
+app.use('/api/admin/products', require('./routes/products'));  // admin CRUD — MUST be before /api/admin
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
 app.use('/api', require('./routes/cheatConfig'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/admin/products', require('./routes/products'));
 
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
