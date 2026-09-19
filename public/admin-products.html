@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBLIVION — Manage Products</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#0a0a14;color:#e0e0f0;padding:2rem;min-height:100vh}
+    h1{font-size:1.5rem;margin-bottom:1.5rem;color:#7C3AED}
+    .card{background:#12121f;border:1px solid #222;border-radius:12px;padding:1.5rem;margin-bottom:1rem}
+    label{display:block;font-size:.85rem;color:#888;margin-bottom:.3rem}
+    input,textarea{width:100%;padding:.6rem;background:#1a1a2e;border:1px solid #333;border-radius:8px;color:#fff;font-size:.9rem;margin-bottom:.75rem}
+    textarea{min-height:60px;resize:vertical}
+    .btn{padding:.6rem 1.5rem;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem}
+    .btn-save{background:#7C3AED;color:#fff}
+    .btn-save:hover{background:#6D28D9}
+    .btn-del{background:#dc2626;color:#fff;padding:.4rem .8rem;font-size:.8rem}
+    .btn-back{background:#333;color:#fff;margin-bottom:1.5rem;display:inline-block;text-decoration:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem}
+    .product-item{display:flex;gap:1rem;align-items:center;padding:1rem;background:#1a1a2e;border-radius:8px;margin-bottom:.5rem}
+    .product-item img{width:60px;height:45px;object-fit:cover;border-radius:6px}
+    .product-item .info{flex:1}
+    .product-item .info h3{font-size:.95rem;margin-bottom:.2rem}
+    .product-item .info p{font-size:.8rem;color:#888}
+    .msg{padding:.75rem;border-radius:8px;margin-bottom:1rem;font-size:.85rem}
+    .msg-ok{background:#065f46;color:#6ee7b7}
+    .msg-err{background:#7f1d1d;color:#fca5a5}
+    #status{min-height:1.5rem}
+  </style>
+</head>
+<body>
+  <a href="/admin" class="btn-back">← Back to Admin</a>
+  <h1>🛒 Manage Products</h1>
+
+  <div id="status"></div>
+
+  <div class="card">
+    <h2 style="font-size:1.1rem;margin-bottom:1rem">Add New Product</h2>
+    <label>Title *</label>
+    <input id="title" placeholder="es. FiveM External"/>
+    <label>Description</label>
+    <textarea id="desc" placeholder="Descrizione..."></textarea>
+    <label>Image URL</label>
+    <input id="img" placeholder="https://i.imgur.com/..."/>
+    <label>Discord URL</label>
+    <input id="discord" placeholder="https://discord.gg/..."/>
+    <button class="btn btn-save" onclick="addProduct()">💾 Save Product</button>
+  </div>
+
+  <h2 style="font-size:1.1rem;margin:1.5rem 0 1rem">Existing Products</h2>
+  <div id="list">Loading...</div>
+
+  <script>
+    function getToken() { return localStorage.getItem('ob_token'); }
+
+    function status(msg, ok) {
+      document.getElementById('status').innerHTML = '<div class="msg ' + (ok ? 'msg-ok' : 'msg-err') + '">' + msg + '</div>';
+    }
+
+    async function api(url, opts) {
+      const token = getToken();
+      return fetch(url, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+        }
+      });
+    }
+
+    async function addProduct() {
+      var title = document.getElementById('title').value.trim();
+      var desc = document.getElementById('desc').value.trim();
+      var img = document.getElementById('img').value.trim();
+      var discord = document.getElementById('discord').value.trim();
+
+      if (!title) { status('Inserisci un titolo!', false); return; }
+
+      status('Salvando...', true);
+
+      try {
+        var res = await api('/api/admin/products', {
+          method: 'POST',
+          body: JSON.stringify({ title: title, description: desc, image_url: img, discord_url: discord })
+        });
+        var data = await res.json();
+        if (res.ok && data.ok) {
+          status('Prodotto aggiunto! ✓', true);
+          document.getElementById('title').value = '';
+          document.getElementById('desc').value = '';
+          document.getElementById('img').value = '';
+          document.getElementById('discord').value = '';
+          loadList();
+        } else {
+          status('Errore ' + res.status + ': ' + JSON.stringify(data), false);
+        }
+      } catch(e) {
+        status('Errore: ' + e.message, false);
+      }
+    }
+
+    async function delProduct(id) {
+      if (!confirm('Eliminare?')) return;
+      try {
+        await api('/api/admin/products/' + id, { method: 'DELETE' });
+        status('Eliminato ✓', true);
+        loadList();
+      } catch(e) {
+        status('Errore: ' + e.message, false);
+      }
+    }
+
+    async function loadList() {
+      try {
+        var res = await fetch('/api/products');
+        var data = await res.json();
+        var el = document.getElementById('list');
+        if (!data.length) { el.innerHTML = '<p style="color:#666">Nessun prodotto</p>'; return; }
+        el.innerHTML = data.map(function(p) {
+          return '<div class="product-item">' +
+            (p.image_url ? '<img src="' + p.image_url + '" onerror="this.style.display=\'none\'"/>' : '') +
+            '<div class="info"><h3>' + (p.title||'') + '</h3><p>' + (p.description||'') + '</p></div>' +
+            '<button class="btn btn-del" onclick="delProduct(\'' + p._id + '\')">Delete</button>' +
+            '</div>';
+        }).join('');
+      } catch(e) {
+        document.getElementById('list').innerHTML = '<p style="color:red">Errore: ' + e.message + '</p>';
+      }
+    }
+
+    loadList();
+  </script>
+</body>
+</html>

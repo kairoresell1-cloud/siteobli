@@ -116,6 +116,7 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 
 app.get('/configs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'configs.html')));
 app.get('/products', (req, res) => res.sendFile(path.join(__dirname, 'public', 'products.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/admin-products', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-products.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
