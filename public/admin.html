@@ -706,7 +706,7 @@
         discord_url: document.getElementById('prod-discord').value,
       };
       if (!body.title) return toast('Titolo obbligatorio', 'error');
-      const url = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
+      const url = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/debug/add-product';
       const method = editingProductId ? 'PUT' : 'POST';
       try {
         const res = await apiFetch(url, { method, body: JSON.stringify(body) });

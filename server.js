@@ -93,6 +93,22 @@ app.get('/api/debug/products', async (req, res) => {
   }
 });
 
+// DEBUG: POST product without auth - to test if frontend works
+app.post('/api/debug/add-product', async (req, res) => {
+  console.log('[DEBUG] POST body:', JSON.stringify(req.body));
+  try {
+    const { title, description, image_url, discord_url } = req.body || {};
+    if (!title) return res.status(400).json({ error: 'title required', receivedBody: req.body });
+    const doc = await db.products.insert({
+      title, description: description || '', image_url: image_url || '',
+      discord_url: discord_url || '', order: 0, created_at: new Date()
+    });
+    res.json({ ok: true, product: doc });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
