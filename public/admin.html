@@ -708,13 +708,22 @@
       if (!body.title) return toast('Titolo obbligatorio', 'error');
       const url = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
       const method = editingProductId ? 'PUT' : 'POST';
-      const res = await apiFetch(url, { method, body: JSON.stringify(body) });
-      if (res.ok) {
-        toast(editingProductId ? 'Prodotto aggiornato' : 'Prodotto aggiunto', 'success');
-        editingProductId = null;
-        document.getElementById('productFormWrap').style.display = 'none';
-        loadProducts();
-      } else { toast('Errore salvataggio', 'error'); }
+      try {
+        const res = await apiFetch(url, { method, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (res.ok) {
+          toast(editingProductId ? 'Prodotto aggiornato ✓' : 'Prodotto aggiunto ✓', 'success');
+          editingProductId = null;
+          document.getElementById('productFormWrap').style.display = 'none';
+          loadProducts();
+        } else {
+          toast('Errore ' + res.status + ': ' + (data.error || JSON.stringify(data)), 'error');
+          console.error('saveProduct error:', res.status, data);
+        }
+      } catch(e) {
+        toast('Errore: ' + e.message, 'error');
+        console.error('saveProduct exception:', e);
+      }
     }
 
     async function deleteProduct(id) {

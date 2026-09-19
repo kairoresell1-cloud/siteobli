@@ -211,45 +211,66 @@ router.post('/refund', async (req, res) => {
 
 // ======= PRODUCTS CRUD =======
 
-// GET /api/admin/products â€” lista tutti i prodotti
+// GET /api/admin/products
 router.get('/products', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const all = await products.find({}).sort({ order: 1, created_at: -1 });
+    const all = await products.find({});
+    all.sort((a, b) => (a.order || 0) - (b.order || 0));
     res.json(all);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('[ADMIN] GET products error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// POST /api/admin/products â€” aggiungi prodotto
+// POST /api/admin/products
 router.post('/products', authMiddleware, adminOnly, async (req, res) => {
-  const { title, description, image_url, discord_url, order } = req.body;
+  console.log('[ADMIN] POST /products body:', req.body);
+  const { title, description, image_url, discord_url } = req.body;
   if (!title) return res.status(400).json({ error: 'title required' });
   try {
     const doc = await products.insert({
-      title,
+      title: title,
       description: description || '',
       image_url: image_url || '',
       discord_url: discord_url || '',
-      order: order || 0,
+      order: 0,
       created_at: new Date()
     });
+    console.log('[ADMIN] Product created:', doc._id);
     res.json({ ok: true, product: doc });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('[ADMIN] POST products error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// PUT /api/admin/products/:id â€” modifica prodotto
+// PUT /api/admin/products/:id
 router.put('/products/:id', authMiddleware, adminOnly, async (req, res) => {
-  const { title, description, image_url, discord_url, order } = req.body;
+  const { title, description, image_url, discord_url } = req.body;
   try {
-    await products.update({ _id: req.params.id }, { $set: { title, description, image_url, discord_url, order } });
+    const numUpdated = await products.update(
+      { _id: req.params.id },
+      { $set: { title, description, image_url, discord_url } }
+    );
+    console.log('[ADMIN] Product updated:', req.params.id, numUpdated);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('[ADMIN] PUT products error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// DELETE /api/admin/products/:id â€” elimina prodotto
+// DELETE /api/admin/products/:id
 router.delete('/products/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
-    await products.remove({ _id: req.params.id });
+    await products.remove({ _id: req.params.id }, {});
+    console.log('[ADMIN] Product deleted:', req.params.id);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('[ADMIN] DELETE products error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
+
 module.exports = router;
