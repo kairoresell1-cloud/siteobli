@@ -1,7 +1,7 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { users, keys, logs, userConfigs, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
+const { users, keys, logs, userConfigs, products, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 router.use(authMiddleware, adminOnly); // Notice: adminOnly now allows both admin and super_admin
@@ -208,4 +208,48 @@ router.post('/refund', async (req, res) => {
   res.json({ ok: true, new_expiry });
 });
 
+
+// ======= PRODUCTS CRUD =======
+
+// GET /api/admin/products â€” lista tutti i prodotti
+router.get('/products', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const all = await products.find({}).sort({ order: 1, created_at: -1 });
+    res.json(all);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/products â€” aggiungi prodotto
+router.post('/products', authMiddleware, adminOnly, async (req, res) => {
+  const { title, description, image_url, discord_url, order } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  try {
+    const doc = await products.insert({
+      title,
+      description: description || '',
+      image_url: image_url || '',
+      discord_url: discord_url || '',
+      order: order || 0,
+      created_at: new Date()
+    });
+    res.json({ ok: true, product: doc });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/admin/products/:id â€” modifica prodotto
+router.put('/products/:id', authMiddleware, adminOnly, async (req, res) => {
+  const { title, description, image_url, discord_url, order } = req.body;
+  try {
+    await products.update({ _id: req.params.id }, { ${'$'}set: { title, description, image_url, discord_url, order } });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/admin/products/:id â€” elimina prodotto
+router.delete('/products/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await products.remove({ _id: req.params.id });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 module.exports = router;
