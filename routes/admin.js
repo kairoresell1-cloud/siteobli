@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { users, keys, logs, userConfigs, products, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
@@ -240,7 +240,7 @@ router.post('/products', authMiddleware, adminOnly, async (req, res) => {
 router.put('/products/:id', authMiddleware, adminOnly, async (req, res) => {
   const { title, description, image_url, discord_url, order } = req.body;
   try {
-    await products.update({ _id: req.params.id }, { ${'$'}set: { title, description, image_url, discord_url, order } });
+    await products.update({ _id: req.params.id }, { $set: { title, description, image_url, discord_url, order } });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
