@@ -1,48 +1,112 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oblivion — Configs</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/global.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Oblivion — Config Editor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/global.css"/>
   <style>
-    .configs-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
+    .config-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .config-tab {
+      padding:0.5rem 1.2rem; border-radius:8px; font-size:0.8rem; font-weight:700;
+      letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;
+      background:var(--bg-2); border:1px solid var(--border); color:var(--text-2);
+      transition:all 0.2s;
     }
-    .config-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .config-tab.active { background:rgba(124,58,237,0.15); border-color:var(--violet); color:var(--violet-light); }
+    .config-tab:hover:not(.active) { border-color:rgba(124,58,237,0.3); color:var(--text); }
+
+    .config-panel { display:none; }
+    .config-panel.active { display:block; }
+
+    .sub-tabs { display:flex; gap:0.4rem; margin-bottom:1.25rem; }
+    .sub-tab {
+      padding:0.35rem 1rem; border-radius:6px; font-size:0.75rem; font-weight:700;
+      letter-spacing:0.05em; cursor:pointer; background:transparent;
+      border:1px solid transparent; color:var(--text-3); transition:all 0.2s;
     }
-    .config-card:hover {
-      border-color: var(--glass-border-glow);
-      transform: translateY(-2px);
+    .sub-tab.active { background:rgba(6,182,212,0.1); border-color:rgba(6,182,212,0.35); color:var(--cyan-light); }
+    .sub-tab:hover:not(.active) { color:var(--text); }
+
+    .sub-panel { display:none; }
+    .sub-panel.active { display:block; }
+
+    .cfg-section { margin-bottom:2rem; }
+    .cfg-section-title {
+      font-size:0.7rem; font-weight:800; letter-spacing:0.2em; text-transform:uppercase;
+      color:var(--text-3); padding-bottom:0.6rem; border-bottom:1px solid var(--border);
+      margin-bottom:1rem;
     }
-    .config-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
+    .cfg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:0.75rem; }
+    .cfg-row {
+      display:flex; align-items:center; justify-content:space-between;
+      background:var(--glass); border:1px solid var(--border); border-radius:10px;
+      padding:0.65rem 1rem; gap:1rem; transition:border-color 0.2s;
     }
-    .config-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-    .config-author { font-size: 0.85rem; color: var(--text-2); margin-top: 0.25rem; }
-    .config-actions { display: flex; gap: 0.5rem; margin-top: auto; }
-    .btn-apply {
-      flex: 1;
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.4);
-      color: var(--violet-light);
+    .cfg-row:hover { border-color:rgba(124,58,237,0.25); }
+    .cfg-label { font-size:0.82rem; font-weight:500; color:var(--text-2); white-space:nowrap; }
+
+    /* Toggle */
+    .toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle-track {
+      position:absolute; inset:0; border-radius:22px;
+      background:rgba(255,255,255,0.08); border:1px solid var(--border);
+      cursor:pointer; transition:all 0.25s;
     }
-    .btn-apply:hover { background: rgba(124,58,237,0.3); border-color: var(--violet); }
+    .toggle-track::after {
+      content:''; position:absolute; left:3px; top:3px;
+      width:14px; height:14px; border-radius:50%;
+      background:var(--text-3); transition:all 0.25s;
+    }
+    .toggle input:checked + .toggle-track { background:rgba(124,58,237,0.4); border-color:var(--violet); }
+    .toggle input:checked + .toggle-track::after { left:21px; background:#fff; }
+
+    /* Slider */
+    .slider-wrap { display:flex; align-items:center; gap:0.6rem; min-width:140px; }
+    .slider-val { font-size:0.75rem; color:var(--violet-light); font-weight:700; min-width:36px; text-align:right; font-family:'Courier New', monospace; }
+    input[type=range] {
+      -webkit-appearance:none; width:100%; height:3px;
+      background:rgba(255,255,255,0.1); border-radius:2px; outline:none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+      background:var(--violet); cursor:pointer; box-shadow:0 0 6px rgba(124,58,237,0.5);
+    }
+
+    /* Select */
+    .cfg-select {
+      background:var(--bg-2); border:1px solid var(--border); border-radius:6px;
+      color:var(--text); font-family:inherit; font-size:0.78rem; padding:0.3rem 0.6rem;
+      outline:none; cursor:pointer; min-width:110px;
+    }
+
+    /* Token card */
+    .token-card {
+      background:var(--glass); border:1px solid rgba(124,58,237,0.3);
+      border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.75rem;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    }
+    .token-label { font-size:0.7rem; font-weight:800; letter-spacing:0.2em; color:var(--text-3); text-transform:uppercase; }
+    .token-val { font-family:'Courier New', monospace; font-size:0.72rem; color:var(--violet-light); word-break:break-all; margin-top:0.25rem; }
+    .token-right { display:flex; gap:0.5rem; align-items:center; flex-shrink:0; }
+
+    /* Save bar */
+    .save-bar {
+      position:sticky; bottom:0; left:0; right:0;
+      background:rgba(10,10,18,0.95); backdrop-filter:blur(12px);
+      border-top:1px solid var(--border); padding:1rem 1.5rem;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem; z-index:20;
+    }
+    .save-status { font-size:0.8rem; color:var(--text-3); }
+    .save-status.saved { color:var(--success); }
+    .save-status.saving { color:var(--cyan-light); }
+    .save-status.error { color:var(--danger); }
   </style>
 </head>
 <body>
+  <div class="animated-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
   <div class="app-layout">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
@@ -54,8 +118,8 @@
       </div>
       <nav class="sidebar-nav">
         <a href="/dashboard" class="nav-item">
-          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
-          Dashboard
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Profile
         </a>
         <a href="/configs" class="nav-item active">
           <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -75,51 +139,242 @@
     </aside>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="main" style="flex-direction:column;overflow-y:auto;">
       <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
       <div class="topbar">
         <button class="mobile-toggle" onclick="toggleSidebar()">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
         <div style="position:absolute;left:50%;transform:translateX(-50%);font-size:1rem;font-weight:800;letter-spacing:0.12em;pointer-events:none;">OBLIVION</div>
-        <button class="btn btn-primary btn-sm" onclick="openSaveModal()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          <span class="desktop-only">Save Config</span>
-        </button>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-left:auto;">
+          <div id="userBadge" style="display:flex;align-items:center;gap:0.5rem;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:0.4rem 0.875rem;font-size:0.85rem;font-weight:600;"></div>
+        </div>
       </div>
-      
-      <div class="page-content page-enter">
-        <p style="color:var(--text-2);margin-bottom:1rem;">Apply community-made settings instantly or share your own with other Oblivion users.</p>
-        
-        <div class="configs-grid" id="configsGrid">
-          <!-- Configs will be loaded here -->
+
+      <div style="padding:1.5rem;flex:1;">
+        <!-- Token Card -->
+        <div class="token-card">
+          <div>
+            <div class="token-label">🔑 Your Cheat Token</div>
+            <div class="token-val" id="tokenVal">Loading...</div>
+          </div>
+          <div class="token-right">
+            <button class="btn btn-ghost btn-sm" onclick="copyToken()" id="copyTokenBtn">Copy Token</button>
+          </div>
+        </div>
+
+        <!-- Main Tabs -->
+        <div class="config-tabs">
+          <button class="config-tab active" onclick="switchTab('aimbot', this)">🎯 Aimbot</button>
+          <button class="config-tab" onclick="switchTab('visuals', this)">👁️ Visuals</button>
+          <button class="config-tab" onclick="switchTab('settings', this)">⚙️ Settings</button>
+        </div>
+
+        <!-- AIMBOT PANEL -->
+        <div class="config-panel active" id="panel-aimbot">
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSub('aimbot','silent',this)">Silent</button>
+            <button class="sub-tab" onclick="switchSub('aimbot','aimbot',this)">Aimbot</button>
+            <button class="sub-tab" onclick="switchSub('aimbot','trigger',this)">Triggerbot</button>
+          </div>
+
+          <!-- Silent Aim -->
+          <div class="sub-panel active" id="sub-aimbot-silent">
+            <div class="cfg-section">
+              <div class="cfg-section-title">Silent Aim — General</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable Silent</span><label class="toggle"><input type="checkbox" data-key="silent_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Silent Key</span><select class="cfg-select" data-key="silent_key" onchange="markDirty()"><option value="0">None</option><option value="1">Left Mouse</option><option value="2">Right Mouse</option><option value="4">Middle Mouse</option><option value="5">Mouse 4</option><option value="6">Mouse 5</option><option value="16">Shift</option><option value="17">Ctrl</option><option value="18">Alt</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Key Mode</span><select class="cfg-select" data-key="silent_key_mode" onchange="markDirty()"><option value="0">Hold</option><option value="1">Toggle</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Show Silent FOV</span><label class="toggle"><input type="checkbox" data-key="silent_show_fov" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Dynamic FOV</span><label class="toggle"><input type="checkbox" data-key="silent_dynamic_fov" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Dead</span><label class="toggle"><input type="checkbox" data-key="silent_ignore_dead" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Invisible</span><label class="toggle"><input type="checkbox" data-key="silent_ignore_invisible" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Friends</span><label class="toggle"><input type="checkbox" data-key="silent_ignore_friends" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Silent Aim — Values</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Distance</span><div class="slider-wrap"><input type="range" min="0" max="1000" data-key="silent_distance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">200</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">FOV</span><div class="slider-wrap"><input type="range" min="0" max="300" data-key="silent_fov" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">70</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Miss Chance %</span><div class="slider-wrap"><input type="range" min="0" max="100" step="0.5" data-key="silent_miss_chance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">0.0</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Thread Delay (ms)</span><div class="slider-wrap"><input type="range" min="0" max="1000" data-key="silent_thread_delay" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">100</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Silent Aim — Bone Selection</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Head</span><label class="toggle"><input type="checkbox" data-key="silent_bone_head" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Neck</span><label class="toggle"><input type="checkbox" data-key="silent_bone_neck" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Chest</span><label class="toggle"><input type="checkbox" data-key="silent_bone_chest" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Foot</span><label class="toggle"><input type="checkbox" data-key="silent_bone_leftfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Foot</span><label class="toggle"><input type="checkbox" data-key="silent_bone_rightfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Hand</span><label class="toggle"><input type="checkbox" data-key="silent_bone_lefthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Hand</span><label class="toggle"><input type="checkbox" data-key="silent_bone_righthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aimbot -->
+          <div class="sub-panel" id="sub-aimbot-aimbot">
+            <div class="cfg-section">
+              <div class="cfg-section-title">Aimbot — General</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable Aimbot</span><label class="toggle"><input type="checkbox" data-key="aimbot_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Aimbot Key</span><select class="cfg-select" data-key="aimbot_key" onchange="markDirty()"><option value="0">None</option><option value="1">Left Mouse</option><option value="2">Right Mouse</option><option value="4">Middle Mouse</option><option value="5">Mouse 4</option><option value="6">Mouse 5</option><option value="16">Shift</option><option value="17">Ctrl</option><option value="18">Alt</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Key Mode</span><select class="cfg-select" data-key="aimbot_key_mode" onchange="markDirty()"><option value="0">Hold</option><option value="1">Toggle</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Show Aimbot FOV</span><label class="toggle"><input type="checkbox" data-key="aimbot_show_fov" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Dead</span><label class="toggle"><input type="checkbox" data-key="aimbot_ignore_dead" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Invisible</span><label class="toggle"><input type="checkbox" data-key="aimbot_ignore_invisible" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Friends</span><label class="toggle"><input type="checkbox" data-key="aimbot_ignore_friends" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Aimbot — Values</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Distance</span><div class="slider-wrap"><input type="range" min="0" max="1000" data-key="aimbot_distance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">200</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">FOV</span><div class="slider-wrap"><input type="range" min="0" max="180" data-key="aimbot_fov" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">5</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Smoothness</span><div class="slider-wrap"><input type="range" min="0" max="100" data-key="aimbot_smoothness" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">10</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Thread Delay (ms)</span><div class="slider-wrap"><input type="range" min="0" max="10" data-key="aimbot_thread_delay" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">1</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Aimbot — Bone Selection</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Head</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_head" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Neck</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_neck" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Chest</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_chest" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Foot</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_leftfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Foot</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_rightfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Hand</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_lefthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Hand</span><label class="toggle"><input type="checkbox" data-key="aimbot_bone_righthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Triggerbot -->
+          <div class="sub-panel" id="sub-aimbot-trigger">
+            <div class="cfg-section">
+              <div class="cfg-section-title">Triggerbot — General</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable Triggerbot</span><label class="toggle"><input type="checkbox" data-key="triggerbot_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Triggerbot Key</span><select class="cfg-select" data-key="triggerbot_key" onchange="markDirty()"><option value="0">None</option><option value="1">Left Mouse</option><option value="2">Right Mouse</option><option value="4">Middle Mouse</option><option value="5">Mouse 4</option><option value="6">Mouse 5</option><option value="16">Shift</option><option value="17">Ctrl</option><option value="18">Alt</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Key Mode</span><select class="cfg-select" data-key="triggerbot_key_mode" onchange="markDirty()"><option value="0">Hold</option><option value="1">Toggle</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Show Triggerbot FOV</span><label class="toggle"><input type="checkbox" data-key="triggerbot_show_fov" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Only Visible</span><label class="toggle"><input type="checkbox" data-key="triggerbot_only_visible" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Dead</span><label class="toggle"><input type="checkbox" data-key="triggerbot_ignore_dead" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Invisible</span><label class="toggle"><input type="checkbox" data-key="triggerbot_ignore_invisible" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore NPC</span><label class="toggle"><input type="checkbox" data-key="triggerbot_ignore_npc" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Triggerbot — Values</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Distance</span><div class="slider-wrap"><input type="range" min="0" max="1000" data-key="triggerbot_distance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">200</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Delay (ms)</span><div class="slider-wrap"><input type="range" min="0" max="500" data-key="triggerbot_delay" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">50</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Crosshair Tolerance</span><div class="slider-wrap"><input type="range" min="1" max="50" step="0.5" data-key="triggerbot_crosshair_tolerance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">15.0</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Thread Delay (ms)</span><div class="slider-wrap"><input type="range" min="0" max="100" data-key="triggerbot_thread_delay" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">5</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Triggerbot — Bone Selection</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Head</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_head" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Neck</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_neck" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Chest</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_chest" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Foot</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_leftfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Foot</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_rightfoot" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Left Hand</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_lefthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Right Hand</span><label class="toggle"><input type="checkbox" data-key="triggerbot_bone_righthand" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISUALS PANEL -->
+        <div class="config-panel" id="panel-visuals">
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSub('visuals','esp',this)">ESP</button>
+          </div>
+
+          <!-- ESP -->
+          <div class="sub-panel active" id="sub-visuals-esp">
+            <div class="cfg-section">
+              <div class="cfg-section-title">ESP — General</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable ESP</span><label class="toggle"><input type="checkbox" data-key="esp_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Show Local Player</span><label class="toggle"><input type="checkbox" data-key="esp_show_local_player" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore Dead</span><label class="toggle"><input type="checkbox" data-key="esp_ignore_dead" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Ignore NPC</span><label class="toggle"><input type="checkbox" data-key="esp_ignore_npc" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+                <div class="cfg-row"><span class="cfg-label">Distance</span><div class="slider-wrap"><input type="range" min="0" max="1000" data-key="esp_distance" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">200</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">ESP — Elements</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Name ESP</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_name_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_name_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">ID ESP</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_id_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_id_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Distance ESP</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_distance_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_distance_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Weapon ESP</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_weapon_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_weapon_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Box ESP</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable Box</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_box_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_box_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Box Type</span><select class="cfg-select" data-key="esp_box_type" onchange="markDirty()"><option value="0">Full Box</option><option value="1">Corner Box</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Line Type</span><select class="cfg-select" data-key="esp_box_line_type" onchange="markDirty()"><option value="0">Dashed</option><option value="1">Solid</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Line Thickness</span><div class="slider-wrap"><input type="range" min="0.1" max="5" step="0.1" data-key="esp_box_line_thickness" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">1.0</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Skeleton & Head</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Enable Skeleton</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_skeleton_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_skeleton_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Skeleton Thickness</span><div class="slider-wrap"><input type="range" min="0.1" max="5" step="0.1" data-key="esp_skeleton_line_thickness" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">1.0</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Enable Head Circle</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_head_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_head_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Head Size</span><div class="slider-wrap"><input type="range" min="5" max="25" step="0.5" data-key="esp_head_size" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">15.0</span></div></div>
+                <div class="cfg-row"><span class="cfg-label">Head Line Thickness</span><div class="slider-wrap"><input type="range" min="0.1" max="5" step="0.1" data-key="esp_head_line_thickness" oninput="sliderUpdate(this)" onchange="markDirty()"><span class="slider-val">1.0</span></div></div>
+              </div>
+            </div>
+            <div class="cfg-section">
+              <div class="cfg-section-title">Health & Armor Bars</div>
+              <div class="cfg-grid">
+                <div class="cfg-row"><span class="cfg-label">Health Bar</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_healthbar_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_healthbar_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">HP Bar Placement</span><select class="cfg-select" data-key="esp_healthbar_placement" onchange="markDirty()"><option value="0">Bottom</option><option value="1">Top</option><option value="2">Left</option><option value="3">Right</option></select></div>
+                <div class="cfg-row"><span class="cfg-label">Armor Bar</span><div style="display:flex;gap:10px;align-items:center;"><input type="color" data-key="esp_armorbar_color" onchange="markDirty()"><label class="toggle"><input type="checkbox" data-key="esp_armorbar_enable" onchange="markDirty()"><span class="toggle-track"></span></label></div></div>
+                <div class="cfg-row"><span class="cfg-label">Armor Bar Placement</span><select class="cfg-select" data-key="esp_armorbar_placement" onchange="markDirty()"><option value="0">Bottom</option><option value="1">Top</option><option value="2">Left</option><option value="3">Right</option></select></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div class="config-panel" id="panel-settings">
+          <div class="cfg-section">
+            <div class="cfg-section-title">General Settings</div>
+            <div class="cfg-grid">
+              <div class="cfg-row"><span class="cfg-label">Streamproof</span><label class="toggle"><input type="checkbox" data-key="streamproof" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+              <div class="cfg-row"><span class="cfg-label">Monitor</span><select class="cfg-select" data-key="overlay_monitor" onchange="markDirty()"><option value="0">Monitor 1</option><option value="1">Monitor 2</option></select></div>
+              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="markDirty(); /* Unhook logic */" style="background:#ef4444;border:none;">Safe Unhook (Exit)</button></div>
+              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="markDirty(); /* Destruct logic */" style="background:#7f1d1d;border:none;">Destruct</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:5rem;"></div><!-- spacer for save bar -->
+      </div>
+
+      <!-- Save Bar -->
+      <div class="save-bar">
+        <span class="save-status" id="saveStatus">All changes saved</span>
+        <div style="display:flex;gap:0.75rem;">
+          <button class="btn btn-ghost" onclick="resetToDefault()">Reset to Default</button>
+          <button class="btn btn-primary" id="saveBtn" onclick="saveConfig()">Save Config</button>
         </div>
       </div>
     </main>
-  </div>
-
-  <!-- Save Config Modal -->
-  <div class="modal-overlay" id="saveModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 style="font-size:1.1rem;font-weight:700;">Save Configuration</h3>
-      </div>
-      <div class="modal-form">
-        <div>
-          <label style="display:block;font-size:0.85rem;color:var(--text-2);margin-bottom:0.5rem;">Config Name</label>
-          <input type="text" class="input" id="confName" placeholder="e.g. Legit CFG V2" />
-        </div>
-        <label class="toggle" style="gap:1rem;justify-content:flex-start;">
-          <input type="checkbox" id="confPublic" checked>
-          <span class="toggle-slider"></span>
-          <span style="font-size:0.9rem;">Make Public</span>
-        </label>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeSaveModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveConfig()">Save</button>
-      </div>
-    </div>
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
@@ -128,113 +383,149 @@
   <script>
     requireAuth();
 
-    let myId = null;
+    let cfg = {};
+    let dirty = false;
+    let saveDebounce = null;
 
-    async function initConfigs() {
-      // Get own user id for deletion logic
-      const meRes = await apiFetch('/api/me');
-      if (meRes.ok) {
-        const { user } = await meRes.json();
-        myId = user._id;
-      }
-      loadConfigs();
+    // ── Tab switching ──────────────────────────────
+    function switchTab(name, el) {
+      document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+    }
+    function switchSub(parent, name, el) {
+      const panel = document.getElementById('panel-' + parent);
+      panel.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+      panel.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('sub-' + parent + '-' + name).classList.add('active');
     }
 
-    async function loadConfigs() {
-      const grid = document.getElementById('configsGrid');
-      grid.innerHTML = '<div style="color:var(--text-2);">Loading configs...</div>';
+    // ── Slider label update ────────────────────────
+    function sliderUpdate(el) {
+      el.parentElement.querySelector('.slider-val').textContent = parseFloat(el.value).toFixed(el.step && el.step.includes('.') ? 1 : 0);
+    }
 
-      const res = await apiFetch('/api/configs');
-      if (!res.ok) { grid.innerHTML = '<div style="color:var(--danger);">Failed to load configs.</div>'; return; }
-      const configs = await res.json();
-      
-      grid.innerHTML = '';
-      if (configs.length === 0) {
-        grid.innerHTML = '<div style="color:var(--text-2);">No configs found. Be the first to share one!</div>';
-        return;
-      }
+    // ── Mark dirty & auto-save ─────────────────────
+    function markDirty() {
+      dirty = true;
+      setStatus('saving', 'Unsaved changes...');
+      clearTimeout(saveDebounce);
+      saveDebounce = setTimeout(saveConfig, 1500);
+    }
 
-      configs.forEach(c => {
-        const d = new Date(c.created_at).toLocaleDateString();
-        const isMine = c.user_id === myId;
-        const card = document.createElement('div');
-        card.className = 'config-card';
-        card.innerHTML = `
-          <div class="config-header">
-            <div>
-              <div class="config-title">${c.name}</div>
-              <div class="config-author">by <span style="color:var(--violet-light);font-weight:600;">${c.username}</span> • ${d}</div>
-            </div>
-            ${c.is_public ? '<span class="badge badge-success">Public</span>' : '<span class="badge badge-warning">Private</span>'}
-          </div>
-          <div class="config-actions">
-            <button class="btn btn-sm btn-apply" onclick="applyConfig('${encodeURIComponent(c.data)}')">Apply Settings</button>
-            ${isMine ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.2);" onclick="deleteConfig('${c._id}')">Delete</button>` : ''}
-          </div>
-        `;
-        grid.appendChild(card);
+    function setStatus(cls, msg) {
+      const el = document.getElementById('saveStatus');
+      el.className = 'save-status ' + cls;
+      el.textContent = msg;
+    }
+
+    // ── Read all controls into cfg object ──────────
+    function collectConfig() {
+      const out = {};
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const k = el.dataset.key;
+        if (el.type === 'checkbox') {
+          out[k] = el.checked;
+        } else if (el.tagName === 'SELECT') {
+          out[k] = parseInt(el.value, 10);
+        } else if (el.type === 'range') {
+          out[k] = parseFloat(el.value);
+        } else if (el.type === 'color') {
+          out[k] = el.value;
+        } else if (el.type === 'number') {
+          out[k] = parseInt(el.value, 10);
+        }
+      });
+      return out;
+    }
+
+    // ── Apply config to all controls ──────────────
+    function applyConfig(c) {
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const k = el.dataset.key;
+        if (!(k in c)) return;
+        if (el.type === 'checkbox') {
+          el.checked = !!c[k];
+        } else if (el.tagName === 'SELECT') {
+          el.value = String(c[k]);
+        } else if (el.type === 'range') {
+          el.value = c[k];
+          sliderUpdate(el);
+        }
       });
     }
 
-    function applyConfig(dataStr) {
-      const data = decodeURIComponent(dataStr);
-      localStorage.setItem('ob_settings', data);
-      toast('Config applied successfully! Navigate to Settings to view.', 'success');
-    }
-
-    async function deleteConfig(id) {
-      if(!confirm('Are you sure you want to delete this config?')) return;
-      const res = await apiFetch('/api/configs/' + id, { method: 'DELETE' });
-      if (res.ok) {
-        toast('Config deleted.', 'success');
-        loadConfigs();
-      } else {
-        toast('Failed to delete config.', 'error');
+    // ── Load config from server ────────────────────
+    async function loadConfig() {
+      try {
+        const res = await apiFetch('/api/userconfig');
+        const data = await res.json();
+        document.getElementById('tokenVal').textContent = data.token;
+        cfg = data.config;
+        applyConfig(cfg);
+        setStatus('saved', 'All changes saved');
+      } catch(e) {
+        setStatus('error', 'Failed to load config');
       }
     }
 
-    // Modal logic
-    function openSaveModal() { document.getElementById('saveModal').classList.add('active'); }
-    function closeSaveModal() { 
-      document.getElementById('saveModal').classList.remove('active'); 
-      document.getElementById('confName').value = '';
-    }
-
+    // ── Save config to server ──────────────────────
     async function saveConfig() {
-      const name = document.getElementById('confName').value.trim();
-      const is_public = document.getElementById('confPublic').checked;
-      const data = localStorage.getItem('ob_settings');
-
-      if (!name) return toast('Please enter a config name.', 'error');
-      if (!data) return toast('No settings found. Go to Settings and configure first.', 'error');
-
-      const res = await apiFetch('/api/configs', {
-        method: 'POST',
-        body: JSON.stringify({ name, data, is_public })
-      });
-
-      if (res.ok) {
-        toast('Config saved!', 'success');
-        closeSaveModal();
-        loadConfigs();
-      } else {
-        toast('Error saving config.', 'error');
+      const newCfg = collectConfig();
+      cfg = newCfg;
+      try {
+        const res = await apiFetch('/api/userconfig', { method:'POST', body: JSON.stringify({ config: newCfg }) });
+        if (res.ok) {
+          dirty = false;
+          setStatus('saved', 'Saved ✓');
+          setTimeout(() => setStatus('', 'All changes saved'), 2000);
+        } else {
+          setStatus('error', 'Save failed!');
+        }
+      } catch(e) {
+        setStatus('error', 'Save failed!');
       }
-      closeSaveModal();
     }
 
+    // ── Reset to defaults ──────────────────────────
+    async function resetToDefault() {
+      if (!confirm('Reset ALL settings to default?')) return;
+      const res = await apiFetch('/api/userconfig', { method:'POST', body: JSON.stringify({ config: {} }) });
+      if (res.ok) { await loadConfig(); toast('Config reset to default', 'success'); }
+    }
+
+    // ── Copy token ─────────────────────────────────
+    function copyToken() {
+      const t = document.getElementById('tokenVal').textContent;
+      navigator.clipboard.writeText(t).then(() => {
+        document.getElementById('copyTokenBtn').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('copyTokenBtn').textContent = 'Copy Token', 2000);
+      });
+    }
+
+    // ── Sidebar utils ──────────────────────────────
     function toggleSidebar() {
-      const sb = document.getElementById('sidebar');
-      const ov = document.getElementById('sidebarOverlay');
-      sb.classList.toggle('open');
-      ov.classList.toggle('open');
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
     }
     function closeSidebar() {
       document.getElementById('sidebar').classList.remove('open');
       document.getElementById('sidebarOverlay').classList.remove('open');
     }
 
-    initConfigs();
+    // ── Boot ───────────────────────────────────────
+    async function boot() {
+      const res = await apiFetch('/api/me');
+      const data = await res.json();
+      document.getElementById('userBadge').innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+        ${data.user.username}
+      `;
+      await loadConfig();
+    }
+    boot();
   </script>
 </body>
 </html>

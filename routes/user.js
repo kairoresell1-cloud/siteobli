@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { users, keys } = require('../database');
+const { users, keys, userConfigs } = require('../database');
 const { authMiddleware } = require('../middleware/auth');
 
 router.get('/me', authMiddleware, async (req, res) => {
@@ -11,7 +11,8 @@ router.get('/me', authMiddleware, async (req, res) => {
   const { password_hash, ...safeUser } = user;
 
   const userKeys = await keys.find({ user_id: user._id });
-  res.json({ user: safeUser, keys: userKeys });
+  const uc = await userConfigs.findOne({ user_id: user._id });
+  res.json({ user: safeUser, keys: userKeys, token: uc ? uc.token : null });
 });
 
 router.post('/redeem', authMiddleware, async (req, res) => {

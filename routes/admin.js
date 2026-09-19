@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { users, keys, logs, generateKeyString } = require('../database');
+const { users, keys, logs, userConfigs, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 router.use(authMiddleware, adminOnly); // Notice: adminOnly now allows both admin and super_admin
@@ -52,6 +52,15 @@ router.post('/users', async (req, res) => {
       expires_at: expires_at ? new Date(expires_at) : null,
       status: 'assigned',
       created_at: new Date()
+    });
+
+    // Auto-seed cheat config with token
+    const token = generateToken();
+    await userConfigs.insert({
+      user_id: doc._id,
+      token,
+      config: { ...DEFAULT_CONFIG },
+      updated_at: new Date()
     });
 
     res.json({ id: doc._id, username });

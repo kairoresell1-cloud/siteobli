@@ -11,6 +11,7 @@ app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
+app.use('/api', require('./routes/cheatConfig'));
 
 // --- PAGE ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
