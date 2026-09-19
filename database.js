@@ -1,4 +1,4 @@
-const Datastore = require('nedb-promises');
+﻿const Datastore = require('nedb-promises');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
@@ -9,6 +9,7 @@ const keys        = Datastore.create({ filename: path.join(dbDir, 'keys.db'),   
 const logs        = Datastore.create({ filename: path.join(dbDir, 'logs.db'),        autoload: true });
 const configs     = Datastore.create({ filename: path.join(dbDir, 'configs.db'),     autoload: true });
 const userConfigs = Datastore.create({ filename: path.join(dbDir, 'userconfigs.db'), autoload: true });
+const products    = Datastore.create({ filename: path.join(dbDir, 'products.db'),    autoload: true });
 
 userConfigs.ensureIndex({ fieldName: 'user_id', unique: true });
 userConfigs.ensureIndex({ fieldName: 'token',   unique: true });
@@ -129,4 +130,4 @@ const DEFAULT_CONFIG = {
 
 };
 
-module.exports = { users, keys, logs, configs, userConfigs, generateKeyString, generateToken, DEFAULT_CONFIG };
+module.exports = { users, keys, logs, configs, userConfigs, products, generateKeyString, generateToken, DEFAULT_CONFIG };
