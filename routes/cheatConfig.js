@@ -3,6 +3,32 @@ const router = express.Router();
 const { users, keys, userConfigs, DEFAULT_CONFIG } = require('../database');
 const { authMiddleware } = require('../middleware/auth');
 
+// ─── PUBLIC: Cheat auth check at boot ────────────────────────────────────────
+// POST /api/auth  body: { token, hwid }
+router.post('/auth', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const { token, hwid } = req.body || {};
+
+  if (!token || token.length !== 64 || !/^[0-9a-f]+$/i.test(token)) {
+    return res.status(401).json({ valid: false, error: 'invalid_token' });
+  }
+
+  const uc = await userConfigs.findOne({ token });
+  if (!uc) return res.status(401).json({ valid: false, error: 'invalid_token' });
+
+  const user = await users.findOne({ _id: uc.user_id });
+  if (!user) return res.status(401).json({ valid: false, error: 'invalid_token' });
+
+  const userKeys = await keys.find({ user_id: user._id, status: 'assigned' });
+  if (!userKeys.length) return res.status(403).json({ valid: false, error: 'license_expired' });
+
+  const now = new Date();
+  const hasValid = userKeys.some(k => !k.expires_at || new Date(k.expires_at) > now);
+  if (!hasValid) return res.status(403).json({ valid: false, error: 'license_expired' });
+
+  return res.status(200).json({ valid: true });
+});
+
 // ─── PUBLIC: Cheat polls this every 2s ───────────────────────────────────────
 // GET /api/config?token=XXXX  OR  Authorization: Bearer XXXX
 router.get('/config', async (req, res) => {
