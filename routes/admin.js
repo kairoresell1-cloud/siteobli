@@ -4,7 +4,20 @@ const bcrypt = require('bcryptjs');
 const { users, keys, logs, userConfigs, products, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 
-router.use(authMiddleware, adminOnly); // Notice: adminOnly now allows both admin and super_admin
+router.use(authMiddleware, adminOnly); // adminOnly allows both admin and super_admin
+
+// ── Helper: controlla se un utente è il super owner ─────────────
+function checkSuperOwner(user) {
+  const soUsername = process.env.SUPER_OWNER_USERNAME;
+  if (!soUsername) return false;
+  return user.role === 'super_admin' && user.username === soUsername;
+}
+
+function checkTargetIsSuperOwner(target) {
+  const soUsername = process.env.SUPER_OWNER_USERNAME;
+  if (!soUsername) return false;
+  return target.role === 'super_admin' && target.username === soUsername;
+}
 
 // --- STATS ---
 router.get('/stats', async (req, res) => {
@@ -19,14 +32,13 @@ router.get('/stats', async (req, res) => {
 router.get('/users', async (req, res) => {
   const allUsers = await users.find({});
   const requester = req.user;
-  const isSuperOwner = requester.role === 'super_admin' &&
-    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+  const isSuperOwner = checkSuperOwner(requester);
 
-  // Regola visibilità password in base al ruolo del richiedente:
-  // - admin       → vede solo password degli user
-  // - super_admin (owner) → vede password di user + admin, ma NON altri super_admin
-  // - super owner (env)   → vede tutto
-  const canSeePassword = (requester, target) => {
+  // Visibilità password per ruolo:
+  // admin       → solo password user
+  // owner       → password user + admin, NON altri owner
+  // super owner → tutto
+  const canSeePassword = (target) => {
     if (isSuperOwner) return true;
     if (requester.role === 'super_admin') return target.role !== 'super_admin';
     if (requester.role === 'admin') return target.role === 'user';
@@ -35,8 +47,7 @@ router.get('/users', async (req, res) => {
 
   const result = await Promise.all(allUsers.reverse().map(async u => {
     const { password_hash, password_plain, ...safe } = u;
-    // Mostra password solo se il richiedente ha i permessi
-    if (canSeePassword(requester, u)) safe.password_plain = password_plain;
+    if (canSeePassword(u)) safe.password_plain = password_plain;
 
     const userKeys = await keys.find({ user_id: u._id });
     if (userKeys.length > 1) {
@@ -65,7 +76,7 @@ router.post('/users', async (req, res) => {
       username, password_hash: hash, password_plain: password,
       role: role || 'user', is_online: false, is_injected: false, created_at: new Date()
     });
-    
+
     // Auto-seed cheat config con token
     const token = generateToken();
     await userConfigs.insert({
@@ -88,13 +99,11 @@ router.put('/users/:id', async (req, res) => {
   if (!target) return res.status(404).json({ error: 'User not found' });
 
   const requester = req.user;
-  const isSuperOwner = requester.role === 'super_admin' &&
-    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+  const isSuperOwner = checkSuperOwner(requester);
+  const targetIsSuperOwner = checkTargetIsSuperOwner(target);
 
-  // Super owner è intoccabile — nessuno può modificarlo tranne se stesso
-  const targetIsSuperOwner = target.role === 'super_admin' &&
-    target.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
-  if (targetIsSuperOwner && target._id !== requester._id) {
+  // Super owner è INTOCCABILE — nessuno può modificarlo tranne se stesso
+  if (targetIsSuperOwner && String(target._id) !== String(requester._id)) {
     return res.status(403).json({ error: 'The Super Owner account cannot be modified' });
   }
 
@@ -103,12 +112,15 @@ router.put('/users/:id', async (req, res) => {
     return res.status(403).json({ error: 'Admins can only edit regular users' });
   }
 
+  // Owner può modificare chiunque tranne il super owner (già bloccato sopra)
 
   const update = {};
   if (username) update.username = username;
   if (role) {
-    if (role === 'super_admin' && !isSuperOwner) {
-      return res.status(403).json({ error: 'Only the Super Owner can grant Owner role' });
+    // Blocca promozione a Owner solo se il target NON è già Owner — evita il falso blocco
+    const isNewPromotion = role === 'super_admin' && target.role !== 'super_admin';
+    if (isNewPromotion && !isSuperOwner) {
+      return res.status(403).json({ error: 'Only the Super Owner can promote to Owner' });
     }
     update.role = role;
   }
@@ -126,12 +138,9 @@ router.delete('/users/:id', async (req, res) => {
   if (!target) return res.status(404).json({ error: 'User not found' });
 
   const requester = req.user;
-  const isSuperOwner = requester.role === 'super_admin' &&
-    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+  const targetIsSuperOwner = checkTargetIsSuperOwner(target);
 
   // Super owner è IMPOSSIBILE da eliminare — nessuno, nemmeno se stesso
-  const targetIsSuperOwner = target.role === 'super_admin' &&
-    target.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
   if (targetIsSuperOwner) {
     return res.status(403).json({ error: 'The Super Owner account cannot be deleted' });
   }
@@ -141,6 +150,7 @@ router.delete('/users/:id', async (req, res) => {
     return res.status(403).json({ error: 'Admins can only delete regular users' });
   }
 
+  // Owner può eliminare chiunque tranne il super owner (già bloccato sopra)
 
   await keys.remove({ user_id: req.params.id }, { multi: true });
   await users.remove({ _id: req.params.id });
@@ -237,11 +247,9 @@ router.post('/refund', async (req, res) => {
   const key = await keys.findOne({ user_id: user._id });
   if (!key) return res.status(404).json({ error: 'No key assigned to this user' });
 
-  // If lifetime, it stays lifetime
   let new_expiry = null;
   if (key.expires_at) {
     const d = new Date(key.expires_at);
-    // If it's already expired, add days from now, else add to existing expiry
     const base = d > new Date() ? d : new Date();
     base.setDate(base.getDate() + days);
     new_expiry = base.toISOString();
