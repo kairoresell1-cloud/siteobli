@@ -83,13 +83,38 @@ router.post('/users', async (req, res) => {
 
 router.put('/users/:id', async (req, res) => {
   const { username, password, role, is_injected } = req.body;
+
+  const target = await users.findOne({ _id: req.params.id });
+  if (!target) return res.status(404).json({ error: 'User not found' });
+
+  const requester = req.user;
+  const isSuperOwner = requester.role === 'super_admin' &&
+    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+
+  // Super owner è intoccabile — nessuno può modificarlo tranne se stesso
+  const targetIsSuperOwner = target.role === 'super_admin' &&
+    target.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+  if (targetIsSuperOwner && target._id !== requester._id) {
+    return res.status(403).json({ error: 'The Super Owner account cannot be modified' });
+  }
+
+  // Admin può modificare solo user
+  if (requester.role === 'admin' && target.role !== 'user') {
+    return res.status(403).json({ error: 'Admins can only edit regular users' });
+  }
+
+  // Owner (non super) può modificare user e admin, ma non altri owner
+  if (requester.role === 'super_admin' && !isSuperOwner && target.role === 'super_admin') {
+    return res.status(403).json({ error: 'Owners cannot edit other Owners' });
+  }
+
   const update = {};
   if (username) update.username = username;
   if (role) {
-     if (role === 'super_admin' && req.user.role !== 'super_admin') {
-       return res.status(403).json({ error: 'Only a super_admin can grant super_admin role' });
-     }
-     update.role = role;
+    if (role === 'super_admin' && !isSuperOwner) {
+      return res.status(403).json({ error: 'Only the Super Owner can grant Owner role' });
+    }
+    update.role = role;
   }
   if (typeof is_injected !== 'undefined') update.is_injected = !!is_injected;
   if (password) {
@@ -101,12 +126,28 @@ router.put('/users/:id', async (req, res) => {
 });
 
 router.delete('/users/:id', async (req, res) => {
-  const userToDel = await users.findOne({ _id: req.params.id });
-  if (!userToDel) return res.status(404).json({ error: 'User not found' });
-  
-  // Only super_admin can delete other super_admins or admins (if desired, or just protect super_admin)
-  if (userToDel.role === 'super_admin' && req.user.role !== 'super_admin') {
-     return res.status(403).json({ error: 'Cannot delete super_admin' });
+  const target = await users.findOne({ _id: req.params.id });
+  if (!target) return res.status(404).json({ error: 'User not found' });
+
+  const requester = req.user;
+  const isSuperOwner = requester.role === 'super_admin' &&
+    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+
+  // Super owner è IMPOSSIBILE da eliminare — nessuno, nemmeno se stesso
+  const targetIsSuperOwner = target.role === 'super_admin' &&
+    target.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+  if (targetIsSuperOwner) {
+    return res.status(403).json({ error: 'The Super Owner account cannot be deleted' });
+  }
+
+  // Admin può eliminare solo user
+  if (requester.role === 'admin' && target.role !== 'user') {
+    return res.status(403).json({ error: 'Admins can only delete regular users' });
+  }
+
+  // Owner (non super) può eliminare user e admin, ma non altri owner
+  if (requester.role === 'super_admin' && !isSuperOwner && target.role === 'super_admin') {
+    return res.status(403).json({ error: 'Owners cannot delete other Owners' });
   }
 
   await keys.remove({ user_id: req.params.id }, { multi: true });

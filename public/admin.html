@@ -548,6 +548,21 @@
       document.getElementById('stat-usersInjected').textContent = d.usersInjected;
     }
 
+    // ── Permission helpers ──────────────────────────
+    // admin    → solo user
+    // owner    → user + admin, non altri owner
+    // super owner → tutto tranne se stesso (handled by backend anyway)
+    function canEdit(myRole, targetRole) {
+      if (myRole === 'admin')       return targetRole === 'user';
+      if (myRole === 'super_admin') return targetRole !== 'super_admin' || false; // owner può toccare user+admin, non altri owner
+      return false;
+    }
+    function canDelete(myRole, targetRole) {
+      if (myRole === 'admin')       return targetRole === 'user';
+      if (myRole === 'super_admin') return targetRole !== 'super_admin'; // owner può eliminare user+admin, non owner; super owner: backend blocca comunque
+      return false;
+    }
+
     async function loadUsers() {
       const res = await apiFetch('/api/admin/users');
       allUsers = await res.json();
@@ -566,10 +581,13 @@
           <td><span class="badge ${u.is_online ? 'badge-success' : 'badge-danger'}">${u.is_online ? 'Online' : 'Offline'}</span></td>
           <td><span class="badge ${u.is_injected ? 'badge-violet' : 'badge-warning'}">${u.is_injected ? 'Yes' : 'No'}</span></td>
           <td class="action-cell">
-            <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>
-            ${u.role !== 'super_admin' || meIsOwner
+            ${canEdit(currentUserRole, u.role)
+              ? `<button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>`
+              : `<span style="color:var(--text-3);font-size:0.75rem;" title="No permission">🔒</span>`
+            }
+            ${canDelete(currentUserRole, u.role)
               ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>`
-              : `<span style="color:var(--text-3);font-size:0.75rem;">🔒</span>`
+              : `<span style="color:var(--text-3);font-size:0.75rem;" title="Protected">🛡️</span>`
             }
           </td>
         </tr>
