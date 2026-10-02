@@ -553,6 +553,7 @@
       allUsers = await res.json();
       const body = document.getElementById('usersBody');
       if (!allUsers.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-3);padding:2rem;">No users yet</td></tr>'; return; }
+      const meIsOwner = currentUserRole === 'super_admin';
       body.innerHTML = allUsers.map(u => `
         <tr>
           <td style="color:var(--text-3);">#${u._id.slice(-6)}</td>
@@ -566,7 +567,10 @@
           <td><span class="badge ${u.is_injected ? 'badge-violet' : 'badge-warning'}">${u.is_injected ? 'Yes' : 'No'}</span></td>
           <td class="action-cell">
             <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>
+            ${u.role !== 'super_admin' || meIsOwner
+              ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>`
+              : `<span style="color:var(--text-3);font-size:0.75rem;">🔒</span>`
+            }
           </td>
         </tr>
       `).join('');

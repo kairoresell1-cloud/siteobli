@@ -53,6 +53,12 @@ router.get('/users', async (req, res) => {
 router.post('/users', async (req, res) => {
   const { username, password, role, expires_at } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
+
+  // Solo super_admin può creare account Owner
+  if (role === 'super_admin' && req.user.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Only an Owner can create Owner accounts' });
+  }
+
   const hash = bcrypt.hashSync(password, 10);
   try {
     const doc = await users.insert({
