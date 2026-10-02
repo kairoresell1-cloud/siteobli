@@ -103,10 +103,6 @@ router.put('/users/:id', async (req, res) => {
     return res.status(403).json({ error: 'Admins can only edit regular users' });
   }
 
-  // Owner (non super) può modificare user e admin, ma non altri owner
-  if (requester.role === 'super_admin' && !isSuperOwner && target.role === 'super_admin') {
-    return res.status(403).json({ error: 'Owners cannot edit other Owners' });
-  }
 
   const update = {};
   if (username) update.username = username;
@@ -145,10 +141,6 @@ router.delete('/users/:id', async (req, res) => {
     return res.status(403).json({ error: 'Admins can only delete regular users' });
   }
 
-  // Owner (non super) può eliminare user e admin, ma non altri owner
-  if (requester.role === 'super_admin' && !isSuperOwner && target.role === 'super_admin') {
-    return res.status(403).json({ error: 'Owners cannot delete other Owners' });
-  }
 
   await keys.remove({ user_id: req.params.id }, { multi: true });
   await users.remove({ _id: req.params.id });
