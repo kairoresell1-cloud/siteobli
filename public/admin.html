@@ -413,14 +413,32 @@
 
         <!-- LOGS -->
         <div class="admin-section" id="asec-logs">
-          <div class="section-header">
-            <h2>User Logs</h2>
-            <button class="btn btn-ghost" onclick="loadLogs()">↺ Refresh</button>
+          <div class="section-header" style="flex-wrap:wrap;gap:0.75rem;">
+            <h2>Activity Logs</h2>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <!-- Search bar viola neon -->
+              <div style="position:relative;">
+                <span style="position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);color:rgba(168,85,247,0.7);font-size:0.9rem;pointer-events:none;">🔍</span>
+                <input type="text" id="logSearch" placeholder="Filter by user or action..."
+                  oninput="filterLogs()"
+                  style="padding:0.5rem 0.75rem 0.5rem 2rem; background:#0a0015; border:1px solid rgba(168,85,247,0.5); color:#e0aaff; border-radius:8px; font-family:'Inter'; font-size:0.82rem; outline:none; box-shadow:0 0 10px rgba(168,85,247,0.15); width:240px; transition:border 0.2s,box-shadow 0.2s;"
+                  onfocus="this.style.borderColor='rgba(192,100,255,0.9)';this.style.boxShadow='0 0 16px rgba(168,85,247,0.35)'"
+                  onblur="this.style.borderColor='rgba(168,85,247,0.5)';this.style.boxShadow='0 0 10px rgba(168,85,247,0.15)'"
+                />
+              </div>
+              <button class="btn btn-ghost" onclick="loadLogs()" style="white-space:nowrap;">↺ Refresh</button>
+            </div>
           </div>
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>#</th><th>Timestamp</th><th>Username</th><th>Action</th><th>IP</th></tr>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>By (Actor)</th>
+                  <th>On (Target)</th>
+                  <th>Detail</th>
+                </tr>
               </thead>
               <tbody id="logsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:2rem;">Loading...</td></tr></tbody>
             </table>
@@ -521,6 +539,16 @@
        if (currentUserRole === 'super_admin') {
          document.querySelectorAll('.super-only').forEach(el => el.style.display = '');
        }
+       // Admin può vedere solo Users e Keys — nasconde tutto il resto
+       if (currentUserRole === 'admin') {
+         ['anav-overview','anav-logs','anav-refund','anav-products'].forEach(id => {
+           const el = document.getElementById(id);
+           if (el) el.style.display = 'none';
+         });
+         // Apre direttamente Users
+         const usersBtn = document.getElementById('anav-users');
+         if (usersBtn) switchAdminTab('users', usersBtn);
+       }
     });
 
     function switchAdminTab(tab, el) {
@@ -615,21 +643,54 @@
       `).join('');
     }
 
-    async function loadLogs() {
-      const res = await apiFetch('/api/admin/logs');
-      const logs = await res.json();
+    let _allLogs = [];
+    const LOG_COLORS = {
+      LOGIN: 'badge-success', LOGOUT: 'badge-info',
+      INJECTED: 'badge-violet', INJECT_REMOVED: 'badge-warning',
+      USER_CREATED: 'badge-success', USER_DELETED: 'badge-danger',
+      USER_EDITED: 'badge-info', KEY_CREATED: 'badge-violet',
+      PANIC: 'badge-danger', REFUND: 'badge-success',
+      EXIT: 'badge-warning'
+    };
+
+    function renderLogsTable(data) {
       const body = document.getElementById('logsBody');
-      if (!logs.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:2rem;">No logs yet</td></tr>'; return; }
-      const actionColors = { LOGIN: 'badge-success', LOGOUT: 'badge-info', INJECTED: 'badge-violet', UNINJECTED: 'badge-warning', INJECT_REMOVED: 'badge-warning', PANIC: 'badge-danger', REFUND: 'badge-success' };
-      body.innerHTML = logs.map(l => `
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:2rem;">No logs found</td></tr>';
+        return;
+      }
+      body.innerHTML = data.map(l => `
         <tr>
-          <td style="color:var(--text-3);">#${l._id.slice(-6)}</td>
-          <td class="log-ts">${new Date(l.created_at).toLocaleString('it-IT')}</td>
-          <td style="font-weight:600;">${l.username || '—'}</td>
-          <td><span class="badge ${actionColors[l.action] || 'badge-info'} log-action">${l.action}</span></td>
-          <td class="ip-cell">${l.ip || '—'}</td>
+          <td class="log-ts" style="white-space:nowrap;font-size:0.8rem;">${new Date(l.created_at).toLocaleString('it-IT')}</td>
+          <td><span class="badge ${LOG_COLORS[l.action] || 'badge-info'} log-action">${l.action}</span></td>
+          <td style="font-weight:600;color:var(--violet-light);">${l.actor || '—'}</td>
+          <td style="color:var(--text);">${l.target || '—'}</td>
+          <td style="font-size:0.8rem;color:var(--text-3);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.detail || ''}">${l.detail || '—'}</td>
         </tr>
       `).join('');
+    }
+
+    function filterLogs() {
+      const q = (document.getElementById('logSearch').value || '').toLowerCase();
+      if (!q) { renderLogsTable(_allLogs); return; }
+      const filtered = _allLogs.filter(l =>
+        (l.actor || '').toLowerCase().includes(q) ||
+        (l.target || '').toLowerCase().includes(q) ||
+        (l.action || '').toLowerCase().includes(q) ||
+        (l.detail || '').toLowerCase().includes(q)
+      );
+      renderLogsTable(filtered);
+    }
+
+    async function loadLogs() {
+      document.getElementById('logsBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:2rem;">Loading...</td></tr>';
+      const res = await apiFetch('/api/admin/logs');
+      if (!res.ok) {
+        document.getElementById('logsBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:2rem;">Error loading logs</td></tr>';
+        return;
+      }
+      _allLogs = await res.json();
+      filterLogs();
     }
 
     async function createUser() {

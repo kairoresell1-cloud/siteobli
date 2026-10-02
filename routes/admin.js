@@ -4,19 +4,32 @@ const bcrypt = require('bcryptjs');
 const { users, keys, logs, userConfigs, products, generateKeyString, generateToken, DEFAULT_CONFIG } = require('../database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 
-router.use(authMiddleware, adminOnly); // adminOnly allows both admin and super_admin
+router.use(authMiddleware, adminOnly);
 
-// ── Helper: controlla se un utente è il super owner ─────────────
+// ── Super owner helpers ──────────────────────────────────────────
 function checkSuperOwner(user) {
   const soUsername = process.env.SUPER_OWNER_USERNAME;
   if (!soUsername) return false;
   return user.role === 'super_admin' && user.username === soUsername;
 }
-
 function checkTargetIsSuperOwner(target) {
   const soUsername = process.env.SUPER_OWNER_USERNAME;
   if (!soUsername) return false;
   return target.role === 'super_admin' && target.username === soUsername;
+}
+
+// ── Log helper ───────────────────────────────────────────────────
+async function addLog({ action, actor, target, detail }) {
+  try {
+    await logs.insert({
+      action,
+      username: target || actor || 'SYSTEM',
+      actor: actor || null,
+      target: target || null,
+      detail: detail || null,
+      created_at: new Date()
+    });
+  } catch (_) {}
 }
 
 // --- STATS ---
@@ -34,10 +47,6 @@ router.get('/users', async (req, res) => {
   const requester = req.user;
   const isSuperOwner = checkSuperOwner(requester);
 
-  // Visibilità password per ruolo:
-  // admin       → solo password user
-  // owner       → password user + admin, NON altri owner
-  // super owner → tutto
   const canSeePassword = (target) => {
     if (isSuperOwner) return true;
     if (requester.role === 'super_admin') return target.role !== 'super_admin';
@@ -48,7 +57,6 @@ router.get('/users', async (req, res) => {
   const result = await Promise.all(allUsers.reverse().map(async u => {
     const { password_hash, password_plain, ...safe } = u;
     if (canSeePassword(u)) safe.password_plain = password_plain;
-
     const userKeys = await keys.find({ user_id: u._id });
     if (userKeys.length > 1) {
       return { ...safe, key_string: `[${userKeys.length} Keys]`, expires_at: null, key_status: 'multiple', key_id: null, game: 'multiple' };
@@ -62,10 +70,9 @@ router.get('/users', async (req, res) => {
 });
 
 router.post('/users', async (req, res) => {
-  const { username, password, role, expires_at } = req.body;
+  const { username, password, role } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
 
-  // Solo super_admin può creare account Owner
   if (role === 'super_admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({ error: 'Only an Owner can create Owner accounts' });
   }
@@ -77,13 +84,14 @@ router.post('/users', async (req, res) => {
       role: role || 'user', is_online: false, is_injected: false, created_at: new Date()
     });
 
-    // Auto-seed cheat config con token
     const token = generateToken();
-    await userConfigs.insert({
-      user_id: doc._id,
-      token,
-      config: { ...DEFAULT_CONFIG },
-      updated_at: new Date()
+    await userConfigs.insert({ user_id: doc._id, token, config: { ...DEFAULT_CONFIG }, updated_at: new Date() });
+
+    await addLog({
+      action: 'USER_CREATED',
+      actor: req.user.username,
+      target: doc.username,
+      detail: `Role: ${doc.role}`
     });
 
     res.json({ id: doc._id, username });
@@ -102,22 +110,16 @@ router.put('/users/:id', async (req, res) => {
   const isSuperOwner = checkSuperOwner(requester);
   const targetIsSuperOwner = checkTargetIsSuperOwner(target);
 
-  // Super owner è INTOCCABILE — nessuno può modificarlo tranne se stesso
   if (targetIsSuperOwner && String(target._id) !== String(requester._id)) {
     return res.status(403).json({ error: 'The Super Owner account cannot be modified' });
   }
-
-  // Admin può modificare solo user
   if (requester.role === 'admin' && target.role !== 'user') {
     return res.status(403).json({ error: 'Admins can only edit regular users' });
   }
 
-  // Owner può modificare chiunque tranne il super owner (già bloccato sopra)
-
   const update = {};
   if (username) update.username = username;
   if (role) {
-    // Blocca promozione a Owner solo se il target NON è già Owner — evita il falso blocco
     const isNewPromotion = role === 'super_admin' && target.role !== 'super_admin';
     if (isNewPromotion && !isSuperOwner) {
       return res.status(403).json({ error: 'Only the Super Owner can promote to Owner' });
@@ -130,6 +132,18 @@ router.put('/users/:id', async (req, res) => {
     update.password_plain = password;
   }
   await users.update({ _id: req.params.id }, { $set: update });
+
+  const changes = [];
+  if (username) changes.push(`username→${username}`);
+  if (role) changes.push(`role→${role}`);
+  if (password) changes.push('password changed');
+  await addLog({
+    action: 'USER_EDITED',
+    actor: requester.username,
+    target: target.username,
+    detail: changes.join(', ') || 'no changes'
+  });
+
   res.json({ ok: true });
 });
 
@@ -140,17 +154,17 @@ router.delete('/users/:id', async (req, res) => {
   const requester = req.user;
   const targetIsSuperOwner = checkTargetIsSuperOwner(target);
 
-  // Super owner è IMPOSSIBILE da eliminare — nessuno, nemmeno se stesso
-  if (targetIsSuperOwner) {
-    return res.status(403).json({ error: 'The Super Owner account cannot be deleted' });
-  }
-
-  // Admin può eliminare solo user
+  if (targetIsSuperOwner) return res.status(403).json({ error: 'The Super Owner account cannot be deleted' });
   if (requester.role === 'admin' && target.role !== 'user') {
     return res.status(403).json({ error: 'Admins can only delete regular users' });
   }
 
-  // Owner può eliminare chiunque tranne il super owner (già bloccato sopra)
+  await addLog({
+    action: 'USER_DELETED',
+    actor: requester.username,
+    target: target.username,
+    detail: `Was: ${target.role}`
+  });
 
   await keys.remove({ user_id: req.params.id }, { multi: true });
   await users.remove({ _id: req.params.id });
@@ -182,6 +196,20 @@ router.post('/keys/generate', async (req, res) => {
     });
     generated.push({ id: doc._id, key_string: keyStr });
   }
+
+  // Log key creation
+  let targetUsername = null;
+  if (user_id) {
+    const u = await users.findOne({ _id: user_id });
+    targetUsername = u ? u.username : `id:${user_id}`;
+  }
+  await addLog({
+    action: 'KEY_CREATED',
+    actor: req.user.username,
+    target: targetUsername,
+    detail: `${generated.length} key(s) — game: ${game || 'global'}${expires_at ? ` — expires: ${new Date(expires_at).toLocaleDateString('it-IT')}` : ' — lifetime'}`
+  });
+
   res.json(generated);
 });
 
@@ -203,7 +231,16 @@ router.delete('/keys/:id', async (req, res) => {
 // --- LOGS ---
 router.get('/logs', async (req, res) => {
   const allLogs = await logs.find({});
-  res.json(allLogs.reverse().slice(0, 500));
+  allLogs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  res.json(allLogs.slice(0, 1000).map(l => ({
+    _id: l._id,
+    username: l.username,
+    action: l.action,
+    actor: l.actor || null,
+    target: l.target || null,
+    detail: l.detail || null,
+    created_at: l.created_at
+  })));
 });
 
 // --- INJECT ---
@@ -212,8 +249,12 @@ router.post('/users/:id/inject', async (req, res) => {
   await users.update({ _id: req.params.id }, { $set: { is_injected: !!injected } });
   const user = await users.findOne({ _id: req.params.id });
   if (user) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    await logs.insert({ user_id: req.params.id, username: user.username, action: injected ? 'INJECTED' : 'INJECT_REMOVED', ip: 'admin', created_at: new Date() });
+    await addLog({
+      action: injected ? 'INJECTED' : 'INJECT_REMOVED',
+      actor: req.user.username,
+      target: user.username,
+      detail: injected ? 'Inject set by admin' : 'Inject removed by admin'
+    });
   }
   res.json({ ok: true });
 });
@@ -222,8 +263,6 @@ router.post('/users/:id/inject', async (req, res) => {
 router.post('/refund', async (req, res) => {
   const { username, days } = req.body;
   if (!username || !days) return res.status(400).json({ error: 'Username and days required' });
-
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   if (username.toUpperCase() === 'ALL') {
     const allAssignedKeys = await keys.find({ status: 'assigned' });
@@ -237,7 +276,7 @@ router.post('/refund', async (req, res) => {
         count++;
       }
     }
-    await logs.insert({ user_id: 'SYSTEM', username: 'ALL_USERS', action: 'REFUND', ip, created_at: new Date() });
+    await addLog({ action: 'REFUND', actor: req.user.username, target: 'ALL_USERS', detail: `+${days} days on ${count} keys` });
     return res.json({ ok: true, new_expiry: `Refunded ${count} keys` });
   }
 
@@ -256,8 +295,7 @@ router.post('/refund', async (req, res) => {
     await keys.update({ _id: key._id }, { $set: { expires_at: new Date(new_expiry) } });
   }
 
-  await logs.insert({ user_id: user._id, username: user.username, action: 'REFUND', ip, created_at: new Date() });
-
+  await addLog({ action: 'REFUND', actor: req.user.username, target: user.username, detail: `+${days} days` });
   res.json({ ok: true, new_expiry });
 });
 
