@@ -8,14 +8,19 @@
   <link rel="stylesheet" href="/css/global.css"/>
   <style>
     .config-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
-    .config-tab {
-      padding:0.5rem 1.2rem; border-radius:8px; font-size:0.8rem; font-weight:700;
-      letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;
-      background:var(--bg-2); border:1px solid var(--border); color:var(--text-2);
-      transition:all 0.2s;
+        .config-tab {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.5rem 1.2rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+      background: rgba(200, 200, 210, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #111; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
-    .config-tab.active { background:rgba(124,58,237,0.15); border-color:var(--violet); color:var(--violet-light); }
-    .config-tab:hover:not(.active) { border-color:rgba(124,58,237,0.3); color:var(--text); }
+    .config-tab.active { 
+      background: rgba(255, 255, 255, 1); border-color: var(--violet); 
+      color: #000; box-shadow: 0 0 15px rgba(255,255,255,0.4); 
+    }
+    .config-tab:hover:not(.active) { background: rgba(220, 220, 230, 0.9); }
+    .tab-icon { width: 18px; height: 18px; mix-blend-mode: multiply; filter: contrast(1.2); }
 
     .config-panel { display:none; }
     .config-panel.active { display:block; }
@@ -46,6 +51,143 @@
     }
     .cfg-row:hover { border-color:rgba(124,58,237,0.25); }
     .cfg-label { font-size:0.82rem; font-weight:500; color:var(--text-2); white-space:nowrap; }
+
+        .custom-color-btn {
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer; position: relative;
+      border: 2px solid rgba(124,58,237,0.5); box-shadow: 0 0 10px rgba(124,58,237,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .custom-color-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px rgba(124,58,237,0.5); }
+    .custom-color-popup {
+      position: absolute; top: 100%; right: 0; margin-top: 10px; width: 220px;
+      background: radial-gradient(circle, rgba(124,58,237,0.3) 2px, transparent 2px), rgba(10,10,20,0.95);
+      background-size: 10px 10px; backdrop-filter: blur(10px);
+      border: 1px solid var(--violet); border-radius: 12px; padding: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(124,58,237,0.4);
+      z-index: 200; cursor: default; animation: colorBgMove 4s linear infinite;
+    }
+    .custom-color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+    .custom-color-swatch {
+      width: 100%; aspect-ratio: 1; border-radius: 6px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2); transition: transform 0.1s;
+    }
+    .custom-color-swatch:hover { transform: scale(1.15); border-color: #fff; }
+    .custom-color-hex {
+      width: 100%; padding: 8px; border-radius: 6px; background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(124,58,237,0.5); color: #fff; font-family: monospace;
+      text-align: center; font-size: 0.9rem;
+    }
+            /* Pickr Custom Theme */
+    .pcr-app[data-theme="nano"] {
+      background: radial-gradient(circle, rgba(124,58,237,0.3) 2px, transparent 2px), rgba(10,10,20,0.95) !important;
+      background-size: 10px 10px !important; backdrop-filter: blur(10px) !important;
+      border: 1px solid var(--violet) !important; border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(124,58,237,0.4) !important;
+      animation: colorBgMove 4s linear infinite !important; z-index: 99999 !important;
+      color: #fff !important;
+    }
+    .pcr-app[data-theme="nano"] .pcr-interaction input {
+      background: rgba(0,0,0,0.5) !important; border: 1px solid rgba(124,58,237,0.5) !important;
+      color: #fff !important; border-radius: 6px !important; font-family: monospace !important;
+    }
+    .pcr-app[data-theme="nano"] .pcr-interaction .pcr-save {
+      background: var(--violet) !important; color: #fff !important; border: none !important;
+    }
+    .pcr-button {
+      width: 36px !important; height: 36px !important; border-radius: 8px !important;
+      border: 2px solid rgba(124,58,237,0.5) !important; box-shadow: 0 0 10px rgba(124,58,237,0.2) !important;
+      transition: transform 0.2s, box-shadow 0.2s !important;
+    }
+    .pcr-button:hover { transform: scale(1.1) !important; box-shadow: 0 0 15px rgba(124,58,237,0.5) !important; }
+    /* Custom Color Picker Button */
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      padding: 0;
+      cursor: pointer;
+      background: radial-gradient(circle, rgba(124,58,237,0.5) 2px, transparent 2px), #0a0a0f;
+      background-size: 8px 8px;
+      box-shadow: 0 0 10px rgba(124,58,237,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: colorBgMove 4s linear infinite;
+    }
+    input[type="color"]:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(124,58,237,0.5);
+    }
+    @keyframes colorBgMove { 
+      0% { background-position: 0 0; } 
+      100% { background-position: 16px 16px; } 
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 4px; }
+    input[type="color"]::-webkit-color-swatch {
+      border: 1px solid rgba(124,58,237,0.8);
+      border-radius: 4px;
+    }
+
+    /* Custom Animated Select */
+    .custom-select-wrap {
+      position: relative;
+      min-width: 140px;
+    }
+    .custom-select-display {
+      background: rgba(10, 10, 20, 0.7);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.78rem;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.1);
+    }
+    .custom-select-display:hover {
+      border-color: var(--violet);
+      box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+    }
+    .custom-select-options {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 0.5rem;
+      background: rgba(10, 10, 20, 0.95);
+      border: 1px solid var(--violet);
+      border-radius: 8px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(124, 58, 237, 0.2);
+      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s;
+    }
+    .custom-select-wrap.open .custom-select-options {
+      max-height: 250px;
+      opacity: 1;
+      overflow-y: auto;
+      transition: max-height 0.3s ease-out, opacity 0.3s;
+    }
+    .custom-option {
+      padding: 0.5rem 0.8rem;
+      font-size: 0.78rem;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .custom-option:hover, .custom-option.selected {
+      background: rgba(124, 58, 237, 0.2);
+      color: #fff;
+    }
+
+    /* Hide standard select */
+    select.cfg-select { display: none !important; }
 
     /* Toggle */
     .toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
@@ -103,9 +245,14 @@
     .save-status.saved { color:var(--success); }
     .save-status.saving { color:var(--cyan-light); }
     .save-status.error { color:var(--danger); }
+    #bg-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; width: 100vw; height: 100vh; }
   </style>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 </head>
 <body>
+  <canvas id="bg-canvas"></canvas>
   <div class="animated-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
   <div class="app-layout">
     <!-- SIDEBAR -->
@@ -125,10 +272,7 @@
           <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
           Configs
         </a>
-        <a href="/settings" class="nav-item">
-          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          Settings
-        </a>
+        
       </nav>
       <div class="sidebar-footer">
         <button onclick="logout()" class="nav-item w-full" style="color:var(--danger);">
@@ -165,9 +309,10 @@
 
         <!-- Main Tabs -->
         <div class="config-tabs">
-          <button class="config-tab active" onclick="switchTab('aimbot', this)">🎯 Aimbot</button>
-          <button class="config-tab" onclick="switchTab('visuals', this)">👁️ Visuals</button>
-          <button class="config-tab" onclick="switchTab('settings', this)">⚙️ Settings</button>
+          <button class="config-tab active" onclick="switchTab('aimbot', this)"><img src="/images/aim.png" class="tab-icon"> AIM</button>
+          <button class="config-tab" onclick="switchTab('visuals', this)"><img src="/images/visuals.png" class="tab-icon"> Visuals</button>
+          <button class="config-tab" onclick="switchTab('settings', this)">Settings</button>
+          <button class="config-tab" onclick="switchTab('saved', this)" style="background:var(--gradient);color:#fff;border:none;box-shadow:0 0 15px rgba(124,58,237,0.3);">Saved Configs</button>
         </div>
 
         <!-- AIMBOT PANEL -->
@@ -355,8 +500,8 @@
             <div class="cfg-grid">
               <div class="cfg-row"><span class="cfg-label">Streamproof</span><label class="toggle"><input type="checkbox" data-key="streamproof" onchange="markDirty()"><span class="toggle-track"></span></label></div>
               <div class="cfg-row"><span class="cfg-label">Monitor</span><select class="cfg-select" data-key="overlay_monitor" onchange="markDirty()"><option value="0">Monitor 1</option><option value="1">Monitor 2</option></select></div>
-              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="markDirty(); /* Unhook logic */" style="background:#ef4444;border:none;">Safe Unhook (Exit)</button></div>
-              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="markDirty(); /* Destruct logic */" style="background:#7f1d1d;border:none;">Destruct</button></div>
+              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="unhookCheat(false)" style="background:#ef4444;border:none;">Safe Unhook (Exit)</button></div>
+              <div class="cfg-row" style="justify-content:center;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);"><button class="btn btn-primary" onclick="unhookCheat(true)" style="background:#7f1d1d;border:none;">Destruct</button></div>
             </div>
           </div>
         </div>
@@ -364,7 +509,32 @@
         <div style="height:5rem;"></div><!-- spacer for save bar -->
       </div>
 
-      <!-- Save Bar -->
+              <!-- SAVED CONFIGS PANEL -->
+        <div class="config-panel" id="panel-saved">
+          <div class="cfg-grid">
+            <div style="grid-column:1/-1; display:flex; flex-direction:column; gap:1.5rem;">
+               <div class="cfg-row" style="flex-direction:column; align-items:stretch; gap:1rem; padding: 1.5rem; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.2); border-radius:12px;">
+                 <h3 style="font-size:1.1rem; color:var(--violet-light);">Save Current Config</h3>
+                 <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                   <input type="text" id="saveCfgName" style="flex:1; min-width:200px; padding:0.6rem; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:#fff; border-radius:6px; font-family:'Inter';" placeholder="Config Name (e.g. Legit V1)" />
+                   <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; font-weight:600;"><input type="checkbox" id="saveCfgPublic" style="width:16px;height:16px;accent-color:var(--violet);" /> Public (Share with Community)</label>
+                   <button class="btn btn-primary" onclick="saveConfigCloud()" style="padding:0.6rem 1.5rem;">Save Config</button>
+                 </div>
+               </div>
+
+               <div>
+                 <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">My Saved Configs</h3>
+                 <div id="myConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
+               </div>
+
+               <div style="margin-top:1rem;">
+                 <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem; color:var(--cyan-light);">Community Configs</h3>
+                 <div id="publicConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
+               </div>
+            </div>
+          </div>
+        </div>
+        <!-- Save Bar -->
       <div class="save-bar">
         <span class="save-status" id="saveStatus">All changes saved</span>
         <div style="display:flex;gap:0.75rem;">
@@ -401,11 +571,56 @@
     }
 
     // ── Slider label update ────────────────────────
+        function initEditableSliders() {
+      document.querySelectorAll('.slider-val').forEach(span => {
+        span.contentEditable = 'true';
+        span.style.outline = 'none';
+        span.style.borderBottom = '1px dashed var(--violet-light)';
+        span.style.cursor = 'text';
+        span.addEventListener('blur', () => {
+          const wrap = span.closest('.slider-wrap');
+          if (!wrap) return;
+          const input = wrap.querySelector('input[type="range"]');
+          if (!input) return;
+          let val = parseFloat(span.textContent);
+          if (isNaN(val)) val = parseFloat(input.value);
+          const min = parseFloat(input.min) || 0;
+          const max = parseFloat(input.max) || 100;
+          if (val < min) val = min;
+          if (val > max) val = max;
+          input.value = val;
+          sliderUpdate(input);
+          input.dispatchEvent(new Event('change'));
+        });
+        span.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            span.blur();
+          }
+        });
+      });
+    }
     function sliderUpdate(el) {
       el.parentElement.querySelector('.slider-val').textContent = parseFloat(el.value).toFixed(el.step && el.step.includes('.') ? 1 : 0);
     }
 
     // ── Mark dirty & auto-save ─────────────────────
+    async function unhookCheat(isDestruct) {
+      toast(isDestruct ? 'Destructing...' : 'Unhooking...', 'info');
+      try {
+        const res = await apiFetch('/api/uninject', { method: 'POST' });
+        if(res.ok) {
+           toast(isDestruct ? 'Destruct successful.' : 'Unhook successful.', 'success');
+           setTimeout(() => window.location.href = '/dashboard', 1500);
+        } else {
+           toast('Error unhooking', 'error');
+        }
+      } catch(e) {
+        console.error(e);
+        toast('Connection error', 'error');
+      }
+    }
+
     function markDirty() {
       dirty = true;
       setStatus('saving', 'Unsaved changes...');
@@ -450,12 +665,94 @@
           el.value = String(c[k]);
         } else if (el.type === 'range') {
           el.value = c[k];
-          sliderUpdate(el);
-        }
-      });
-    }
+          sliderUpdate(el); } else if (el.type === 'color') { el.value = c[k] || '#ffffff'; if (el.nextElementSibling && el.nextElementSibling.classList.contains('custom-color-btn')) { el.nextElementSibling.style.backgroundColor = el.value; } } }); initEditableSliders(); if (typeof initCustomColorPickers === 'function') initCustomColorPickers(); if (typeof initCustomSelects === 'function') initCustomSelects(); }
 
     // ── Load config from server ────────────────────
+            async function loadCloudConfigs() {
+      try {
+        const myRes = await apiFetch('/api/saved/my');
+        const pubRes = await apiFetch('/api/saved/public');
+        if(myRes.ok && pubRes.ok) {
+          const myConfigs = await myRes.json();
+          const pubConfigs = await pubRes.json();
+          
+          const myHtml = myConfigs.length ? myConfigs.map(c => `
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);padding:0.75rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
+              <div>
+                <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
+                <span class="badge ${c.is_public ? 'badge-info' : 'badge-warning'}" style="margin-left:0.5rem;font-size:0.65rem;">${c.is_public ? 'Public' : 'Private'}</span>
+                <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
+              </div>
+              <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-sm btn-ghost" onclick="loadConfigCloud('${c._id}')">Load Config</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteConfigCloud('${c._id}')">Delete</button>
+              </div>
+            </div>
+          `).join('') : 'No configs saved yet.';
+          document.getElementById('myConfigsList').innerHTML = myHtml;
+
+          const pubHtml = pubConfigs.length ? pubConfigs.map(c => `
+            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(6,182,212,0.05);padding:0.75rem 1rem;border-radius:8px;border:1px solid rgba(6,182,212,0.1);">
+              <div>
+                <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
+                <span style="font-size:0.75rem;color:var(--text-3);margin-left:0.5rem;">by <strong style="color:var(--violet-light);">${c.username}</strong></span>
+                <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
+              </div>
+              <button class="btn btn-sm" style="background:var(--cyan);color:#000;font-weight:800;border:none;" onclick="loadConfigCloud('${c._id}')">Load Config</button>
+            </div>
+          `).join('') : 'No community configs available.';
+          document.getElementById('publicConfigsList').innerHTML = pubHtml;
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    async function saveConfigCloud() {
+      const name = document.getElementById('saveCfgName').value.trim();
+      const is_public = document.getElementById('saveCfgPublic').checked;
+      if(!name) return toast('Please enter a config name.', 'error');
+      
+      const res = await apiFetch('/api/saved', {
+        method: 'POST',
+        body: JSON.stringify({ name, is_public, config: collectConfig() })
+      });
+      if(res.ok) {
+        toast('Config saved!', 'success');
+        document.getElementById('saveCfgName').value = '';
+        loadCloudConfigs();
+      } else {
+        toast('Error saving config.', 'error');
+      }
+    }
+
+    async function loadConfigCloud(id) {
+      if(!confirm('This will overwrite your current settings. Continue?')) return;
+      const res = await apiFetch('/api/saved/' + id + '/load', { method: 'POST' });
+      if(res.ok) {
+        toast('Config loaded successfully!', 'success');
+        await loadConfig();
+        loadCloudConfigs();
+      } else {
+        toast('Error loading config.', 'error');
+      }
+    }
+
+    async function deleteConfigCloud(id) {
+      if(!confirm('Delete this config forever?')) return;
+      const res = await apiFetch('/api/saved/' + id, { method: 'DELETE' });
+      if(res.ok) {
+        toast('Config deleted.', 'info');
+        loadCloudConfigs();
+      }
+    }
+
+    // Load configs when switching to cloud tab
+    const _switchTab = switchTab;
+    switchTab = function(name, el) {
+      _switchTab(name, el);
+      if(name === 'saved') loadCloudConfigs();
+    };
+
+
     async function loadConfig() {
       try {
         const res = await apiFetch('/api/userconfig');
@@ -513,6 +810,97 @@
       document.getElementById('sidebarOverlay').classList.remove('open');
     }
 
+    function initCustomSelects() {
+      document.querySelectorAll('select.cfg-select').forEach(select => {
+        if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-wrap')) {
+          select.nextElementSibling.remove();
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'custom-select-wrap';
+        
+        const display = document.createElement('div');
+        display.className = 'custom-select-display';
+        display.innerHTML = `<span>${select.options[select.selectedIndex]?.text || ''}</span> 
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>`;
+        
+        const optionsList = document.createElement('div');
+        optionsList.className = 'custom-select-options';
+        
+        Array.from(select.options).forEach((opt, idx) => {
+          const div = document.createElement('div');
+          div.className = 'custom-option' + (idx === select.selectedIndex ? ' selected' : '');
+          div.textContent = opt.text;
+          div.addEventListener('click', () => {
+            select.selectedIndex = idx;
+            select.dispatchEvent(new Event('change'));
+            display.querySelector('span').textContent = opt.text;
+            optionsList.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+            div.classList.add('selected');
+            wrap.classList.remove('open');
+          });
+          optionsList.appendChild(div);
+        });
+        
+        display.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.custom-select-wrap').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+          wrap.classList.toggle('open');
+        });
+        
+        wrap.appendChild(display);
+        wrap.appendChild(optionsList);
+        select.parentNode.insertBefore(wrap, select.nextSibling);
+      });
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-select-wrap').forEach(w => w.classList.remove('open'));
+      });
+    }
+
+    let pickrInstances = [];
+    function initCustomColorPickers() {
+      // Destroy old instances
+      pickrInstances.forEach(p => p.destroyAndRemove());
+      pickrInstances = [];
+      document.querySelectorAll('input[type="color"]').forEach(input => {
+        input.style.display = 'none';
+        
+        // Remove old custom buttons if they exist
+        if (input.nextElementSibling && input.nextElementSibling.classList.contains('custom-color-btn')) {
+          input.nextElementSibling.remove();
+        }
+
+        const container = document.createElement('div');
+        input.parentNode.insertBefore(container, input.nextSibling);
+        
+        const pickr = Pickr.create({
+          el: container,
+          theme: 'nano',
+          default: input.value || '#ffffff',
+          components: {
+            preview: true,
+            opacity: false,
+            hue: true,
+            interaction: {
+              hex: true,
+              input: true,
+              save: true
+            }
+          }
+        });
+        
+        pickr.on('save', (color) => {
+          input.value = color.toHEXA().toString();
+          input.dispatchEvent(new Event('change'));
+          pickr.hide();
+        }).on('change', (color) => {
+          input.value = color.toHEXA().toString();
+          input.dispatchEvent(new Event('change'));
+        });
+        
+        pickrInstances.push(pickr);
+      });
+    }
+
     // ── Boot ───────────────────────────────────────
     async function boot() {
       const res = await apiFetch('/api/me');
@@ -525,5 +913,22 @@
     }
     boot();
   </script>
+  <script src="/js/starfield.js"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

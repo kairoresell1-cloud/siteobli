@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -22,7 +22,9 @@
       --radius: 16px;
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg0); color: var(--text); overflow-x: hidden; }
+    body.lang-en .it { display: none !important; }
+    body.lang-it .en { display: none !important; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg0); color: var(--text); overflow-x: hidden; user-select: none; -webkit-user-select: none; }
 
     /* BG */
     #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
@@ -284,169 +286,636 @@
       .s-sub { margin-bottom: 2.5rem; }
       .support-card { padding: 2.5rem 1.5rem; }
     }
+    .hero-logo, .tagline { user-select: none; -webkit-user-select: none; }
+        .showcase-interactive-area {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3rem;
+        margin: 4rem 0;
+        perspective: 1200px;
+      }
+      .showcase-triggers {
+        display: flex;
+        gap: 2rem;
+        z-index: 10;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .sc-trigger {
+        position: relative;
+        width: 220px;
+        height: 70px;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        background: #000;
+      }
+      .sc-trigger span {
+        position: relative;
+        z-index: 2;
+        font-size: 1.2rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,1);
+      }
+      .trigger-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.4;
+        transition: opacity 0.3s, transform 0.5s;
+      }
+      .sc-trigger:hover .trigger-bg { opacity: 0.8; transform: scale(1.1); }
+      .sc-trigger:hover {
+        border-color: rgba(124,58,237,0.6);
+        box-shadow: 0 10px 30px rgba(124,58,237,0.4);
+        transform: translateY(-2px);
+      }
+
+      /* 3D SCREEN */
+      .showcase-3d-screen-wrapper {
+        position: absolute;
+        top: 100px;
+        width: 100%;
+        max-width: 800px;
+        aspect-ratio: 16/9;
+        border-radius: 20px;
+        opacity: 0;
+        transform: rotateX(30deg) translateY(40px) scale(0.9);
+        transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        pointer-events: none;
+        z-index: 1;
+      }
+      .showcase-3d-screen-wrapper.visible {
+        opacity: 1;
+        transform: rotateX(0deg) translateY(0) scale(1);
+      }
+      .showcase-3d-screen-wrapper.locked {
+        pointer-events: auto;
+      }
+
+      .sc-border-glow {
+        position: absolute;
+        inset: -3px;
+        border-radius: 22px;
+        background: #000;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .sc-border-glow::before {
+        content: '';
+        position: absolute;
+        top: -50%; left: -50%; width: 200%; height: 200%;
+        background: conic-gradient(from 0deg, transparent 40%, #7C3AED 80%, #06B6D4 100%);
+        animation: spinShowcase 4s linear infinite;
+      }
+
+      .sc-screen-inner {
+        position: absolute;
+        inset: 0;
+        background: #060610;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.05);
+      }
+      .sc-screen-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.3;
+        transition: opacity 0.5s;
+      }
+      .sc-screen-inner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.9) 100%);
+      }
+
+      .sc-screen-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+      }
+      .sc-screen-content h3 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 20px rgba(124,58,237,0.8);
+      }
+      .sc-screen-content p {
+        color: var(--cyan);
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .sc-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 15px currentColor;
+        animation: floatParticle 3s infinite alternate ease-in-out;
+      }
+      .scp-1 { width:6px; height:6px; top:20%; left:20%; color:#7C3AED; animation-delay:0s; }
+      .scp-2 { width:4px; height:4px; top:70%; left:80%; color:#06B6D4; animation-delay:1s; }
+      .scp-3 { width:8px; height:8px; top:80%; left:30%; color:#7C3AED; animation-delay:2s; }
+      .scp-4 { width:5px; height:5px; top:30%; left:70%; color:#06B6D4; animation-delay:0.5s; }
+      .scp-5 { width:3px; height:3px; top:50%; left:50%; color:#a855f7; animation-delay:1.5s; }
+
+      @keyframes spinShowcase { 100% { transform: rotate(360deg); } }
+      @keyframes floatParticle {
+        0% { transform: translateY(0) scale(1); opacity: 0.3; }
+        100% { transform: translateY(-20px) scale(1.5); opacity: 1; }
+      }
+      
+      .showcase-stats {
+        margin-top: 550px !important;
+      }
+      @media (max-width: 768px) {
+        .showcase-stats { margin-top: 380px !important; }
+        .showcase-3d-screen-wrapper { top: 160px; }
+      }
+          /* ================= ORBITAL BACKGROUND ================= */
+      .ob-bg-hero {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        pointer-events: none;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      .ob-bg-hero img {
+        width: 250px;
+        height: 250px;
+        object-fit: contain;
+        opacity: 0.15;
+        filter: drop-shadow(0 0 40px rgba(124,58,237,1));
+        position: absolute;
+      }
+      .ob-bg-ring-1, .ob-bg-ring-2 {
+        position: absolute;
+        border-radius: 50%;
+      }
+      .ob-bg-ring-1 {
+        width: 450px;
+        height: 450px;
+        border: 1px dashed rgba(124,58,237,0.25);
+        animation: obSpin 30s linear infinite;
+      }
+      .ob-bg-ring-2 {
+        width: 650px;
+        height: 650px;
+        background: conic-gradient(from 0deg, transparent 40%, #7C3AED 80%, #06B6D4 100%);
+        animation: obSpin 15s linear infinite reverse;
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #fff 0);
+        mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #fff 0);
+      }
+      .ob-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 15px currentColor;
+      }
+      .ob-bg-ring-1 .p-1 { width:6px; height:6px; top:-3px; left:50%; color:#7C3AED; }
+      .ob-bg-ring-1 .p-2 { width:4px; height:4px; bottom:20%; right:-2px; color:#a855f7; }
+      .ob-bg-ring-1 .p-3 { width:7px; height:7px; bottom:-3px; left:30%; color:#7C3AED; }
+      .ob-bg-ring-1 .p-7 { width:5px; height:5px; top:20%; left:-2px; color:#d8b4fe; }
+      .ob-bg-ring-1 .p-8 { width:3px; height:3px; bottom:40%; left:-2px; color:#a855f7; }
+      .ob-bg-ring-1 .p-9 { width:5px; height:5px; top:10%; right:40px; color:#7C3AED; }
+      
+      @keyframes obSpin { 100% { transform: rotate(360deg); } }
+          /* ========= FAQ CSS ========= */
+      .faq-item {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 1rem;
+      }
+      .faq-item:hover {
+        border-color: rgba(124,58,237,0.4);
+        background: rgba(124,58,237,0.05);
+      }
+      .faq-item summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        list-style: none;
+        color: var(--text);
+        outline: none;
+      }
+      .faq-item summary::-webkit-details-marker { display: none; }
+      .faq-item summary::after {
+        content: '+';
+        color: var(--v);
+        font-size: 1.5rem;
+        transition: transform 0.3s ease;
+      }
+      .faq-item[open] summary::after {
+        transform: rotate(45deg);
+        color: var(--c);
+      }
+      .faq-item p {
+        margin-top: 1rem;
+        color: var(--text2);
+        line-height: 1.6;
+        font-size: 0.95rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+        animation: faqFade 0.3s ease-in-out;
+      }
+      @keyframes faqFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+<link rel="icon" type="image/png" href="/images/logo.png">
+  </style>
+  <style>
+  /* ========= MARQUEE ========= */
+  .marquee-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: rgba(6, 6, 16, 0.6);
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(124,58,237,0.15);
+    border-bottom: 1px solid rgba(124,58,237,0.15);
+    z-index: 5;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  }
+  .marquee-glow-line {
+    position: absolute;
+    height: 2px;
+    width: 300px;
+    background: linear-gradient(90deg, transparent, var(--v), var(--c), transparent);
+    z-index: 2;
+  }
+  .marquee-glow-line.top {
+    top: -1px;
+    left: -300px;
+    animation: slideGlowTop 5s ease-in-out infinite alternate;
+  }
+  .marquee-glow-line.bottom {
+    bottom: -1px;
+    right: -300px;
+    animation: slideGlowBottom 5s ease-in-out infinite alternate;
+  }
+  @keyframes slideGlowTop {
+    0% { left: -300px; }
+    100% { left: 100%; }
+  }
+  @keyframes slideGlowBottom {
+    0% { right: -300px; }
+    100% { right: 100%; }
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: scrollMarquee 15s linear infinite;
+  }
+  .marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0 4rem;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.1);
+    -webkit-text-stroke: 1px rgba(124,58,237,0.3);
+    text-transform: uppercase;
+  }
+  .marquee-item img {
+    height: 40px;
+    opacity: 0.5;
+    filter: drop-shadow(0 0 10px rgba(124,58,237,0.8));
+  }
+  @keyframes scrollMarquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
   </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-
-<!-- ===== NAVBAR ===== -->
-<nav id="navbar">
-  <a href="/" class="nav-logo">
-    <img src="/images/logo.png" alt="Oblivion"/>
-    <span class="nav-logo-text">OBLIVION</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="/products">Products</a></li>
-    <li><a href="#showcase">Showcase</a></li>
-    <li><a href="#features">Features</a></li>
-    
-    <li><a href="#support">Support</a></li>
-    <li><a href="/login" class="nav-btn">Log In</a></li>
-  </ul>
-  <button class="hamburger" onclick="toggleNav()">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
-<div class="mobile-nav" id="mobileNav">
-  <a href="/products" onclick="closeNav()">Products - FiveM</a>
-  <a href="/products" onclick="closeNav()">Products - CS:GO 2</a>
-  <a href="#showcase" onclick="closeNav()">Showcase</a>
-  <a href="#features" onclick="closeNav()">Features</a>
+  <canvas id="bg-canvas"></canvas>
+  <!-- ORBITAL BG -->
+  <div class="ob-bg-hero">
+    <div class="ob-bg-ring-1">
+      <div class="ob-particle p-1"></div>
+      <div class="ob-particle p-2"></div>
+      <div class="ob-particle p-3"></div>
+      <div class="ob-particle p-7"></div>
+      <div class="ob-particle p-8"></div>
+      <div class="ob-particle p-9"></div>
+    </div>
+    <div class="ob-bg-ring-2"></div>
+    <img src="/images/logo.png" alt="Logo BG">
+  </div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
   
-  <a href="#support" onclick="closeNav()">Support</a>
-  <a href="/login" class="nav-btn" style="text-align:center;margin-top:1rem;">Dashboard</a>
-</div>
-
-<!-- ===== HERO ===== -->
-<section id="hero">
-  <div class="hero-badge"><div class="badge-dot"></div> Undetected · Season Active</div>
-  <div class="hero-title-wrap">
-    <h1 class="hero-title">OBLIVION</h1>
+  <!-- ===== NAVBAR ===== -->
+  <nav id="navbar">
+    <a href="/" class="nav-logo">
+      <img src="/images/logo.png" alt="Oblivion"/>
+      <span class="nav-logo-text">OBLIVION</span>
+    </a>
+    <ul class="nav-links" style="align-items:center;">
+      <li><a href="/products"><span class="en">Products</span><span class="it">Prodotti</span></a></li>
+      <li><a href="#showcase"><span class="en">Showcase</span><span class="it">Vetrina</span></a></li>
+      <li><a href="#features"><span class="en">Features</span><span class="it">Funzioni</span></a></li>
+      <li><a href="#support"><span class="en">Support</span><span class="it">Supporto</span></a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li style="display:flex;gap:0.5rem;align-items:center;margin:0 0.5rem;">
+        <img src="https://flagcdn.com/w20/it.png" alt="IT" style="cursor:pointer;opacity:0.5;transition:0.2s;width:20px;height:14px;border-radius:2px;" onclick="setLang('it')" id="flag-it">
+        <img src="https://flagcdn.com/w20/gb.png" alt="EN" style="cursor:pointer;opacity:1;transition:0.2s;width:20px;height:14px;border-radius:2px;" onclick="setLang('en')" id="flag-en">
+      </li>
+      <li><a href="/login" class="nav-btn"><span class="en">Log In</span><span class="it">Accedi</span></a></li>
+    </ul>
+    <button class="hamburger" onclick="toggleNav()">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+  <div class="mobile-nav" id="mobileNav">
+    <a href="/products" onclick="closeNav()">Products</a>
+    <a href="#showcase" onclick="closeNav()">Showcase</a>
+    <a href="#features" onclick="closeNav()">Features</a>
+    <a href="#support" onclick="closeNav()">Support</a>
+    <a href="/login" class="nav-btn" style="text-align:center;margin-top:1rem;">Dashboard</a>
   </div>
-  <p class="hero-sub">The most advanced cheat platform ever engineered. External injection, invisible to every anticheat. Built for players who refuse to lose.</p>
-  <div class="hero-ctas">
-    <a href="/products" class="btn-primary">Get Access Now</a>
-    <a href="#showcase" class="btn-ghost">Watch Showcase</a>
-  </div>
-  <div class="scroll-hint">
-    <svg class="scroll-arrow" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-    </svg>
-  </div>
-</section>
+  
+  <!-- ===== HERO ===== -->
+  <section id="hero">
+    <div class="hero-badge"><div class="badge-dot"></div> Undetected · Season Active</div>
+    <div class="hero-title-wrap">
+      <h1 class="hero-title">OBLIVION</h1>
+    </div>
+    <p class="hero-sub">The most advanced cheat platform ever engineered. Kernel injection, invisible to every anticheat. Built for players who refuse to lose.</p>
+    <div class="hero-ctas">
+      <a href="/products" class="btn-primary">Get Access Now</a>
+      <a href="#showcase" class="btn-ghost">Watch Showcase</a>
+    </div>
+    <div class="scroll-hint">
+      <svg class="scroll-arrow" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </div>
+  </section>
 
-<!-- ===== SHOWCASE ===== -->
-<section class="section" id="showcase">
-  <div class="section-inner">
-    <div class="s-label reveal">In Action</div>
-    <h2 class="s-title reveal">See <span class="grad-text">Oblivion</span> at Work</h2>
-    <p class="s-sub reveal">Raw gameplay. No editing. No cuts. Just Oblivion doing what it does best.</p>
-
-    <div class="showcase-frame reveal" id="showcaseFrame">
-      <!-- VIDEO WILL GO HERE — replace src when you send the file -->
-      <video id="showcaseVideo" controls preload="none" poster="" style="display:none;"></video>
-      <div class="video-placeholder" id="videoPH">
-        <div class="video-placeholder-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#a78bfa" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
-          </svg>
+  <!-- ===== MARQUEE ===== -->
+  <div class="marquee-container">
+    <div class="marquee-glow-line top"></div>
+    <div class="marquee-glow-line bottom"></div>
+    <div class="marquee-track">
+      <!-- 1st set -->
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <!-- 2nd set for seamless loop -->
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+      <div class="marquee-item"><img src="/images/logo.png" /> OBLIVION</div>
+    </div>
+  </div>
+  
+  <!-- ===== SHOWCASE ===== -->
+  <section class="section" id="showcase">
+    <div class="section-inner">
+      <div class="s-label reveal">In Action</div>
+      <h2 class="s-title reveal">See <span class="grad-text">Oblivion</span> at Work</h2>
+      <p class="s-sub reveal">Raw gameplay. No editing. No cuts. Just Oblivion doing what it does best.</p>
+  
+      <div class="showcase-interactive-area reveal">
+        <!-- Hover Triggers -->
+        <div class="showcase-triggers">
+          <div class="sc-trigger" onclick="lockScreen('FiveM', 'https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg')" onmouseenter="showScreen('FiveM', 'https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg')" onmouseleave="hideScreen()">
+            <img src="https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg" class="trigger-bg"/>
+            <span>FiveM</span>
+          </div>
+          <div class="sc-trigger" onclick="lockScreen('CS:GO 2', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseenter="showScreen('CS:GO 2', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseleave="hideScreen()">
+            <img src="https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg" class="trigger-bg"/>
+            <span>CS:GO 2</span>
+          </div>
         </div>
-        <p>Showcase video — dropping soon</p>
+  
+        <!-- 3D Pop-up Screen -->
+        <div class="showcase-3d-screen-wrapper" id="scScreenWrapper">
+          <button id="scCloseBtn" onclick="unlockScreen()" style="display:none; position:absolute; top:10px; right:10px; z-index:10; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:#fff; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
+          <div class="sc-border-glow"></div>
+          <div class="sc-screen-inner">
+            <img src="" id="scScreenBg" class="sc-screen-bg" />
+            <video id="scVideo" controls preload="none" style="display:none; position:absolute; inset:0; width:100%; height:100%; z-index:5; object-fit:cover; border-radius:20px;"></video>
+            
+            <div class="sc-particle scp-1"></div>
+            <div class="sc-particle scp-2"></div>
+            <div class="sc-particle scp-3"></div>
+            <div class="sc-particle scp-4"></div>
+            <div class="sc-particle scp-5"></div>
+            
+            <div class="sc-screen-content" id="scScreenContent">
+              <h3 id="scScreenTitle">Game</h3>
+              <p>Click to watch showcase</p>
+            </div>
+          </div>
+        </div>
+  
+      </div>
+  
+      <script>
+        let scLocked = false;
+        let scCurrentTitle = '';
+  
+        function showScreen(title, imgUrl) {
+          if (scLocked) return;
+          document.getElementById('scScreenTitle').textContent = title;
+          document.getElementById('scScreenBg').src = imgUrl;
+          document.getElementById('scScreenWrapper').classList.add('visible');
+        }
+        
+        function hideScreen() {
+          if (scLocked) return;
+          document.getElementById('scScreenWrapper').classList.remove('visible');
+        }
+  
+        function lockScreen(title, imgUrl) {
+          if (scLocked && scCurrentTitle === title) {
+            return;
+          }
+          scLocked = true;
+          scCurrentTitle = title;
+          document.getElementById('scScreenWrapper').classList.add('visible');
+          document.getElementById('scScreenWrapper').classList.add('locked');
+          
+          document.getElementById('scScreenContent').style.display = 'none';
+          
+          const vid = document.getElementById('scVideo');
+          vid.style.display = 'block';
+          
+          document.getElementById('scCloseBtn').style.display = 'block';
+        }
+  
+        function unlockScreen() {
+          scLocked = false;
+          scCurrentTitle = '';
+          document.getElementById('scScreenWrapper').classList.remove('locked');
+          document.getElementById('scScreenContent').style.display = 'block';
+          document.getElementById('scVideo').style.display = 'none';
+          document.getElementById('scVideo').pause(); 
+          document.getElementById('scCloseBtn').style.display = 'none';
+          hideScreen();
+        }
+      </script>
+  
+      <div class="showcase-stats">
+        <div class="stat-item reveal">
+          <div class="stat-num">0%</div>
+          <div class="stat-lbl">Ban Rate</div>
+        </div>
+        <div class="stat-item reveal" style="transition-delay:.1s">
+          <div class="stat-num">&lt;1ms</div>
+          <div class="stat-lbl">Injection Latency</div>
+        </div>
+        <div class="stat-item reveal" style="transition-delay:.2s">
+          <div class="stat-num">24/7</div>
+          <div class="stat-lbl">Active Support</div>
+        </div>
       </div>
     </div>
-
-    <div class="showcase-stats">
-      <div class="stat-item reveal">
-        <div class="stat-num">0%</div>
-        <div class="stat-lbl">Ban Rate</div>
-      </div>
-      <div class="stat-item reveal" style="transition-delay:.1s">
-        <div class="stat-num">&lt;1ms</div>
-        <div class="stat-lbl">Injection Latency</div>
-      </div>
-      <div class="stat-item reveal" style="transition-delay:.2s">
-        <div class="stat-num">24/7</div>
-        <div class="stat-lbl">Active Support</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== FEATURES ===== -->
-<section class="section" id="features" style="padding-top:2rem;">
-  <div class="section-inner">
-    <div class="s-label reveal">Capabilities</div>
-    <h2 class="s-title reveal">Built to <span class="grad-text">Dominate</span></h2>
-    <p class="s-sub reveal">Every module engineered for maximum performance. Zero compromises. Zero detection.</p>
-    <div class="features-grid">
-      <div class="feat-card reveal">
-        <div class="feat-icon">👁️</div>
-        <div class="feat-name">Full ESP</div>
-        <div class="feat-desc">Player boxes, health bars, skeletons, distance, names. See every enemy before they round the corner.</div>
-      </div>
-      <div class="feat-card reveal" style="transition-delay:.08s">
-        <div class="feat-icon">🎯</div>
-        <div class="feat-name">Precision Aimbot</div>
-        <div class="feat-desc">Sub-pixel accuracy with configurable FOV, smoothness, target bone selection and full movement prediction.</div>
-      </div>
-      <div class="feat-card reveal" style="transition-delay:.16s">
-        <div class="feat-icon">🔮</div>
-        <div class="feat-name">External Injection</div>
-        <div class="feat-desc">Injected at external level. No signatures. No traces. No bans. Bypasses every known anticheat system.</div>
-      </div>
-      <div class="feat-card reveal" style="transition-delay:.24s">
-        <div class="feat-icon">⚡</div>
-        <div class="feat-name">Zero-Overhead Core</div>
-        <div class="feat-desc">Engineered to add 0ms to your frame time. Your FPS stays untouched — we take nothing from performance.</div>
-      </div>
-      <div class="feat-card reveal" style="transition-delay:.32s">
-        <div class="feat-icon">💀</div>
-        <div class="feat-name">Panic System</div>
-        <div class="feat-desc">One-press emergency wipe. Destroys every trace from memory in under 500ms. Sleep easy knowing you're clean.</div>
-      </div>
-      <div class="feat-card reveal" style="transition-delay:.4s">
-        <div class="feat-icon">🎨</div>
-        <div class="feat-name">Custom Configs</div>
-        <div class="feat-desc">Save, share and apply community-made configs instantly. Play your style, tuned exactly your way.</div>
+  </section>
+  
+  <!-- ===== FEATURES ===== -->
+  <section class="section" id="features" style="padding-top:2rem;">
+    <div class="section-inner">
+      <div class="s-label reveal">Capabilities</div>
+      <h2 class="s-title reveal">Built to <span class="grad-text">Dominate</span></h2>
+      <p class="s-sub reveal">Every module engineered for maximum performance. Zero compromises. Zero detection.</p>
+      <div class="features-grid">
+        <div class="feat-card reveal">
+          <div class="feat-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--v)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></div>
+          <div class="feat-name">Full ESP</div>
+          <div class="feat-desc">Player boxes, health bars, skeletons, distance, names. See every enemy before they round the corner.</div>
+        </div>
+        <div class="feat-card reveal" style="transition-delay:.08s">
+          <div class="feat-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--c)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+          <div class="feat-name">Aimbot</div>
+          <div class="feat-desc">Smooth aim, silent aim, FOV control, and bone selection. Hit every shot with perfect accuracy.</div>
+        </div>
+        <div class="feat-card reveal" style="transition-delay:.16s">
+          <div class="feat-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+          <div class="feat-name">Undetected</div>
+          <div class="feat-desc">Ring 0 kernel injection. We bypass custom anti-cheats with ease.</div>
+          </div>
+          <div class="feat-card reveal" style="transition-delay:.24s">
+            <div class="feat-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#e11d48" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg></div>
+            <div class="feat-name">Triggerbot</div>
+            <div class="feat-desc">0 ms delay reaction time. Instant firing the millisecond an enemy crosses your crosshair.</div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ===== PRICING ===== -->
-
-
-<!-- ===== SUPPORT ===== -->
-<section class="section" id="support">
-  <div class="section-inner">
-    <div class="s-label reveal">Help</div>
-    <h2 class="s-title reveal">We Got <span class="grad-text">Your Back</span></h2>
-    <p class="s-sub reveal" style="margin-bottom:0;">Questions, issues, key problems — we're always there. Join the community and get real answers in minutes.</p>
-    <div class="support-card reveal">
-      <p style="font-size:.95rem;color:var(--text2);line-height:1.8;max-width:480px;margin:0 auto;">
-        Oblivion has a <strong style="color:var(--text);">dedicated Discord server</strong> where the team provides live support, announces updates, shares configs, and keeps the community connected. Whether you're having a key issue, need setup help, or just want to hang — we're there.
-      </p>
-      <!-- Replace href below with your Discord invite link -->
-      <a href="https://discord.gg/kuqzes7Kv" target="_blank" class="discord-btn" id="discordBtn">
-        <svg class="discord-logo" viewBox="0 0 24 24" fill="white">
-          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-        </svg>
-        Join our Discord
-      </a>
-      <div class="support-note">
-        Can't find your answer? Email us at <strong style="color:var(--text2);">support@oblivion.gg</strong><br/>
-        Response time: usually under 2 hours.
+  <!-- ===== SUPPORT ===== -->
+  <section class="section" id="support">
+    <div class="section-inner">
+      <div class="s-label reveal">Community</div>
+      <h2 class="s-title reveal">24/7 <span class="grad-text">Support</span></h2>
+      <div class="support-card reveal">
+        <h3>Need Help or Want to Buy?</h3>
+        <p class="support-note">Join our official Discord server to purchase access, get technical support, or chat with the community.</p>
+        <a href="https://discord.gg/oblivion" class="discord-btn" target="_blank">
+          <svg class="discord-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36">
+            <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+          </svg>
+          Join Discord
+        </a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="section" id="faq">
+    <div class="section-inner">
+      <div class="s-label reveal">FAQ</div>
+      <h2 class="s-title reveal">Common <span class="grad-text">Questions</span></h2>
+      <div style="max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:1rem;">
+        
+        <details class="faq-item">
+          <summary>
+            <span class="en">Is it safe to use OBLIVION?</span>
+            <span class="it">È sicuro usare OBLIVION?</span>
+          </summary>
+          <p>
+            <span class="en">Absolutely. We use custom kernel-level bypasses to ensure our cheats are completely undetected and safe from custom anti-cheats.</span>
+            <span class="it">Assolutamente sì. Utilizziamo bypass a livello kernel per garantire che i nostri cheat siano completamente undetectable e al sicuro da anti-cheat custom.</span>
+          </p>
+        </details>
+        
+        <details class="faq-item">
+          <summary>
+            <span class="en">What games does Oblivion have cheats for?</span>
+            <span class="it">Per quali giochi Oblivion ha il cheat?</span>
+          </summary>
+          <p>
+            <span class="en">Currently, our primary focus is on FiveM, providing comprehensive modules for ESP, Aimbot, and much more. We are also actively working on releasing full support for CS:GO 2.</span>
+            <span class="it">Al momento il nostro focus principale è su FiveM, offrendo moduli completi per ESP, Aimbot e molte altre features. Stiamo inoltre lavorando per rilasciare presto il supporto completo a CS:GO 2.</span>
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="en">Does the cheat impact my game's FPS?</span>
+            <span class="it">Il cheat influisce negativamente sugli FPS?</span>
+          </summary>
+          <p>
+            <span class="en">No. Oblivion is meticulously optimized. Thanks to our externally rendered overlay via GPU, the performance impact on your game is exactly zero. You will experience no lag or stuttering.</span>
+            <span class="it">No. Oblivion è ottimizzato maniacalmente. Grazie al nostro overlay renderizzato esternamente via GPU, l'impatto sulle prestazioni del gioco è letteralmente pari a zero. Non avrai lag né cali di frame.</span>
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="en">Do I need to disable Secure Boot?</span>
+            <span class="it">Bisogna disattivare il Secure Boot?</span>
+          </summary>
+          <p>
+            <span class="en">No. Unlike most cheats on the market, Oblivion does NOT require you to disable Secure Boot, keeping your PC safe and significantly reducing the risk of being flagged.</span>
+            <span class="it">No. A differenza della stragrande maggioranza dei cheat sul mercato, Oblivion NON richiede la disattivazione del Secure Boot, mantenendo il tuo PC molto più sicuro e riducendo il rischio di flag.</span>
+          </p>
+        </details>
+
+      </div>
+    </div>
+  </section>
 
 <footer>
-  <p>&copy; 2026 <strong>OBLIVION</strong>. All rights reserved. &nbsp;·&nbsp; For educational purposes only. &nbsp;·&nbsp; <a href="/login" style="color:var(--text2);text-decoration:none;">Login</a></p>
-</footer>
 
 <script>
   // NAVBAR SCROLL
@@ -457,34 +926,9 @@
   // MOBILE NAV
   function toggleNav() { document.getElementById('mobileNav').classList.toggle('open'); }
   function closeNav() { document.getElementById('mobileNav').classList.remove('open'); }
-
-  // STARFIELD CANVAS
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, stars = [];
-  function resizeCanvas() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-  resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-  for (let i = 0; i < 130; i++) {
-    stars.push({
-      x: Math.random(), y: Math.random(),
-      r: Math.random() * 1.5 + 0.3,
-      a: Math.random() * 0.6 + 0.1,
-      da: (Math.random() - 0.5) * 0.004,
-      c: ['#7C3AED','#06B6D4','#ffffff'][Math.floor(Math.random()*3)]
-    });
-  }
-  function drawBg() {
-    ctx.clearRect(0,0,W,H);
-    stars.forEach(s => {
-      s.a = Math.max(0.05, Math.min(0.85, s.a + s.da));
-      if (s.a <= 0.05 || s.a >= 0.85) s.da *= -1;
-      ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
-      ctx.fillStyle = s.c; ctx.globalAlpha = s.a; ctx.fill();
-    });
-    ctx.globalAlpha = 1; requestAnimationFrame(drawBg);
-  }
-  drawBg();
-
+</script>
+<script src="/js/starfield.js"></script>
+<script>
   // PARTICLE BURST after title reveals
   setTimeout(() => {
     const hero = document.getElementById('hero');
@@ -519,7 +963,44 @@
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script>
+  function setLang(lang) {
+    document.body.className = 'lang-' + lang;
+    document.getElementById('flag-it').style.opacity = lang === 'it' ? '1' : '0.5';
+    document.getElementById('flag-en').style.opacity = lang === 'en' ? '1' : '0.5';
+    localStorage.setItem('obl_lang', lang);
+  }
+  const savedLang = localStorage.getItem('obl_lang') || 'en';
+  setLang(savedLang);
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
