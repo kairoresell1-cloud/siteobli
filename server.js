@@ -13,6 +13,7 @@ app.use('/api', require('./routes/user'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
 app.use('/api', require('./routes/cheatConfig'));
+app.use('/api/saved', require('./routes/savedConfigs'));
 
 // --- PRODUCTS API (inline, no separate router) ---
 

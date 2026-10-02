@@ -18,9 +18,26 @@ router.get('/stats', async (req, res) => {
 // --- USERS ---
 router.get('/users', async (req, res) => {
   const allUsers = await users.find({});
-  // Join key info
+  const requester = req.user;
+  const isSuperOwner = requester.role === 'super_admin' &&
+    requester.username === (process.env.SUPER_OWNER_USERNAME || '__none__');
+
+  // Regola visibilità password in base al ruolo del richiedente:
+  // - admin       → vede solo password degli user
+  // - super_admin (owner) → vede password di user + admin, ma NON altri super_admin
+  // - super owner (env)   → vede tutto
+  const canSeePassword = (requester, target) => {
+    if (isSuperOwner) return true;
+    if (requester.role === 'super_admin') return target.role !== 'super_admin';
+    if (requester.role === 'admin') return target.role === 'user';
+    return false;
+  };
+
   const result = await Promise.all(allUsers.reverse().map(async u => {
-    const { password_hash, ...safe } = u;
+    const { password_hash, password_plain, ...safe } = u;
+    // Mostra password solo se il richiedente ha i permessi
+    if (canSeePassword(requester, u)) safe.password_plain = password_plain;
+
     const userKeys = await keys.find({ user_id: u._id });
     if (userKeys.length > 1) {
       return { ...safe, key_string: `[${userKeys.length} Keys]`, expires_at: null, key_status: 'multiple', key_id: null, game: 'multiple' };
@@ -43,18 +60,7 @@ router.post('/users', async (req, res) => {
       role: role || 'user', is_online: false, is_injected: false, created_at: new Date()
     });
     
-    // Auto-generate key with the chosen duration
-    const keyStr = generateKeyString();
-    await keys.insert({
-      key_string: keyStr,
-      user_id: doc._id,
-      game: req.body.game || 'global',
-      expires_at: expires_at ? new Date(expires_at) : null,
-      status: 'assigned',
-      created_at: new Date()
-    });
-
-    // Auto-seed cheat config with token
+    // Auto-seed cheat config con token
     const token = generateToken();
     await userConfigs.insert({
       user_id: doc._id,

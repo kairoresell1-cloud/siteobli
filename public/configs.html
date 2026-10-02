@@ -513,27 +513,70 @@
         <div class="config-panel" id="panel-saved">
           <div class="cfg-grid">
             <div style="grid-column:1/-1; display:flex; flex-direction:column; gap:1.5rem;">
-               <div class="cfg-row" style="flex-direction:column; align-items:stretch; gap:1rem; padding: 1.5rem; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.2); border-radius:12px;">
-                 <h3 style="font-size:1.1rem; color:var(--violet-light);">Save Current Config</h3>
-                 <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
-                   <input type="text" id="saveCfgName" style="flex:1; min-width:200px; padding:0.6rem; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.4); color:#fff; border-radius:6px; font-family:'Inter';" placeholder="Config Name (e.g. Legit V1)" />
-                   <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; font-weight:600;"><input type="checkbox" id="saveCfgPublic" style="width:16px;height:16px;accent-color:var(--violet);" /> Public (Share with Community)</label>
-                   <button class="btn btn-primary" onclick="saveConfigCloud()" style="padding:0.6rem 1.5rem;">Save Config</button>
-                 </div>
-               </div>
 
-               <div>
-                 <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">My Saved Configs</h3>
-                 <div id="myConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
-               </div>
+              <!-- SAVE CURRENT CONFIG -->
+              <div style="padding:1.5rem; background:rgba(124,58,237,0.07); border:1px solid rgba(124,58,237,0.3); border-radius:14px; box-shadow:0 0 18px rgba(124,58,237,0.08);">
+                <h3 style="font-size:1.05rem; color:var(--violet-light); margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+                  <span style="font-size:1.2rem;">💾</span> Save Current Config
+                </h3>
+                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="saveCfgName"
+                    style="flex:1; min-width:200px; padding:0.65rem 1rem; border:1px solid rgba(124,58,237,0.4); background:rgba(0,0,0,0.5); color:#fff; border-radius:8px; font-family:'Inter'; outline:none; transition:border 0.2s;"
+                    placeholder="Config name (e.g. Legit V1)"
+                    onfocus="this.style.borderColor='rgba(168,85,247,0.8)'" onblur="this.style.borderColor='rgba(124,58,237,0.4)'"
+                  />
+                  <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
+                    <input type="checkbox" id="saveCfgPublic" style="width:16px;height:16px;accent-color:var(--violet);" />
+                    Public
+                  </label>
+                  <button class="btn btn-primary" onclick="saveConfigCloud()" style="padding:0.65rem 1.5rem; white-space:nowrap;">Save Config</button>
+                </div>
+              </div>
 
-               <div style="margin-top:1rem;">
-                 <h3 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem; color:var(--cyan-light);">Community Configs</h3>
-                 <div id="publicConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
-               </div>
+              <!-- MY CONFIGS -->
+              <div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; border-bottom:1px solid rgba(124,58,237,0.2); padding-bottom:0.75rem;">
+                  <h3 style="font-size:1.05rem; color:var(--violet-light); display:flex; align-items:center; gap:0.5rem; margin:0;">
+                    <span>🔐</span> My Configs
+                  </h3>
+                  <!-- Search bar viola neon -->
+                  <div style="position:relative; width:220px;">
+                    <span style="position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);color:rgba(168,85,247,0.7);font-size:0.9rem;pointer-events:none;">🔍</span>
+                    <input type="text" id="searchMy" placeholder="Search..."
+                      oninput="filterConfigs('my')"
+                      style="width:100%; padding:0.5rem 0.75rem 0.5rem 2rem; background:#0a0015; border:1px solid rgba(168,85,247,0.5); color:#e0aaff; border-radius:8px; font-family:'Inter'; font-size:0.82rem; outline:none; box-shadow:0 0 10px rgba(168,85,247,0.15); transition:border 0.2s, box-shadow 0.2s; box-sizing:border-box;"
+                      onfocus="this.style.borderColor='rgba(192,100,255,0.9)';this.style.boxShadow='0 0 16px rgba(168,85,247,0.35)'"
+                      onblur="this.style.borderColor='rgba(168,85,247,0.5)';this.style.boxShadow='0 0 10px rgba(168,85,247,0.15)'"
+                    />
+                  </div>
+                </div>
+                <div id="myConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
+              </div>
+
+              <!-- COMMUNITY CONFIGS -->
+              <div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; border-bottom:1px solid rgba(6,182,212,0.15); padding-bottom:0.75rem;">
+                  <h3 style="font-size:1.05rem; color:var(--cyan-light); display:flex; align-items:center; gap:0.5rem; margin:0;">
+                    <span>🌐</span> Community Configs
+                  </h3>
+                  <!-- Search bar viola neon -->
+                  <div style="position:relative; width:220px;">
+                    <span style="position:absolute;left:0.7rem;top:50%;transform:translateY(-50%);color:rgba(168,85,247,0.7);font-size:0.9rem;pointer-events:none;">🔍</span>
+                    <input type="text" id="searchPublic" placeholder="Search..."
+                      oninput="filterConfigs('public')"
+                      style="width:100%; padding:0.5rem 0.75rem 0.5rem 2rem; background:#0a0015; border:1px solid rgba(168,85,247,0.5); color:#e0aaff; border-radius:8px; font-family:'Inter'; font-size:0.82rem; outline:none; box-shadow:0 0 10px rgba(168,85,247,0.15); transition:border 0.2s, box-shadow 0.2s; box-sizing:border-box;"
+                      onfocus="this.style.borderColor='rgba(192,100,255,0.9)';this.style.boxShadow='0 0 16px rgba(168,85,247,0.35)'"
+                      onblur="this.style.borderColor='rgba(168,85,247,0.5)';this.style.boxShadow='0 0 10px rgba(168,85,247,0.15)'"
+                    />
+                  </div>
+                </div>
+                <div id="publicConfigsList" style="display:flex; flex-direction:column; gap:0.5rem; min-height:50px; color:var(--text-3);">Loading...</div>
+              </div>
+
             </div>
           </div>
         </div>
+
         <!-- Save Bar -->
       <div class="save-bar">
         <span class="save-status" id="saveStatus">All changes saved</span>
@@ -667,90 +710,130 @@
           el.value = c[k];
           sliderUpdate(el); } else if (el.type === 'color') { el.value = c[k] || '#ffffff'; if (el.nextElementSibling && el.nextElementSibling.classList.contains('custom-color-btn')) { el.nextElementSibling.style.backgroundColor = el.value; } } }); initEditableSliders(); if (typeof initCustomColorPickers === 'function') initCustomColorPickers(); if (typeof initCustomSelects === 'function') initCustomSelects(); }
 
-    // ── Load config from server ────────────────────
-            async function loadCloudConfigs() {
-      try {
-        const myRes = await apiFetch('/api/saved/my');
-        const pubRes = await apiFetch('/api/saved/public');
-        if(myRes.ok && pubRes.ok) {
-          const myConfigs = await myRes.json();
-          const pubConfigs = await pubRes.json();
-          
-          const myHtml = myConfigs.length ? myConfigs.map(c => `
-            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);padding:0.75rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
-                <span class="badge ${c.is_public ? 'badge-info' : 'badge-warning'}" style="margin-left:0.5rem;font-size:0.65rem;">${c.is_public ? 'Public' : 'Private'}</span>
-                <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
-              </div>
-              <div style="display:flex;gap:0.5rem;">
-                <button class="btn btn-sm btn-ghost" onclick="loadConfigCloud('${c._id}')">Load Config</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteConfigCloud('${c._id}')">Delete</button>
-              </div>
-            </div>
-          `).join('') : 'No configs saved yet.';
-          document.getElementById('myConfigsList').innerHTML = myHtml;
+    // ── Cache per la search ─────────────────────────
+    let _myConfigs = [];
+    let _pubConfigs = [];
 
-          const pubHtml = pubConfigs.length ? pubConfigs.map(c => `
-            <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(6,182,212,0.05);padding:0.75rem 1rem;border-radius:8px;border:1px solid rgba(6,182,212,0.1);">
-              <div>
-                <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
-                <span style="font-size:0.75rem;color:var(--text-3);margin-left:0.5rem;">by <strong style="color:var(--violet-light);">${c.username}</strong></span>
-                <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
-              </div>
-              <button class="btn btn-sm" style="background:var(--cyan);color:#000;font-weight:800;border:none;" onclick="loadConfigCloud('${c._id}')">Load Config</button>
-            </div>
-          `).join('') : 'No community configs available.';
-          document.getElementById('publicConfigsList').innerHTML = pubHtml;
+    function renderConfigCard(c, isMine) {
+      if (isMine) {
+        return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(124,58,237,0.06);padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(124,58,237,0.15);">
+          <div>
+            <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
+            <span class="badge ${c.is_public ? 'badge-info' : 'badge-warning'}" style="margin-left:0.5rem;font-size:0.65rem;">${c.is_public ? 'Public' : 'Private'}</span>
+            <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-sm btn-ghost" onclick="loadConfigCloud('${c._id}')">Load</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteConfigCloud('${c._id}')">Delete</button>
+          </div>
+        </div>`;
+      } else {
+        return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(6,182,212,0.04);padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(6,182,212,0.12);">
+          <div>
+            <strong style="font-size:0.95rem;color:var(--text);">${c.name}</strong>
+            <span style="font-size:0.75rem;color:var(--text-3);margin-left:0.5rem;">by <strong style="color:var(--violet-light);">${c.username || 'Unknown'}</strong></span>
+            <div style="font-size:0.7rem;color:var(--text-3);margin-top:0.2rem;">${new Date(c.created_at).toLocaleString()}</div>
+          </div>
+          <button class="btn btn-sm" style="background:var(--cyan);color:#000;font-weight:800;border:none;" onclick="loadConfigCloud('${c._id}')">Load</button>
+        </div>`;
+      }
+    }
+
+    function filterConfigs(type) {
+      if (type === 'my') {
+        const q = (document.getElementById('searchMy').value || '').toLowerCase();
+        const filtered = _myConfigs.filter(c => c.name.toLowerCase().includes(q));
+        document.getElementById('myConfigsList').innerHTML = filtered.length
+          ? filtered.map(c => renderConfigCard(c, true)).join('')
+          : '<div style="color:var(--text-3);padding:0.5rem 0;">No configs found.</div>';
+      } else {
+        const q = (document.getElementById('searchPublic').value || '').toLowerCase();
+        const filtered = _pubConfigs.filter(c =>
+          c.name.toLowerCase().includes(q) || (c.username || '').toLowerCase().includes(q)
+        );
+        document.getElementById('publicConfigsList').innerHTML = filtered.length
+          ? filtered.map(c => renderConfigCard(c, false)).join('')
+          : '<div style="color:var(--text-3);padding:0.5rem 0;">No community configs found.</div>';
+      }
+    }
+
+    async function loadCloudConfigs() {
+      document.getElementById('myConfigsList').innerHTML = '<div style="color:var(--text-3);padding:0.5rem 0;">Loading...</div>';
+      document.getElementById('publicConfigsList').innerHTML = '<div style="color:var(--text-3);padding:0.5rem 0;">Loading...</div>';
+      try {
+        const [myRes, pubRes] = await Promise.all([
+          apiFetch('/api/saved/my'),
+          apiFetch('/api/saved/public')
+        ]);
+        if (myRes.ok) {
+          _myConfigs = await myRes.json();
+          filterConfigs('my');
+        } else {
+          document.getElementById('myConfigsList').innerHTML = '<div style="color:var(--danger);">Error loading your configs.</div>';
         }
-      } catch(e) { console.error(e); }
+        if (pubRes.ok) {
+          _pubConfigs = await pubRes.json();
+          filterConfigs('public');
+        } else {
+          document.getElementById('publicConfigsList').innerHTML = '<div style="color:var(--danger);">Error loading community configs.</div>';
+        }
+      } catch(e) {
+        console.error('[SAVED]', e);
+        document.getElementById('myConfigsList').innerHTML = '<div style="color:var(--danger);">Network error.</div>';
+        document.getElementById('publicConfigsList').innerHTML = '<div style="color:var(--danger);">Network error.</div>';
+      }
     }
 
     async function saveConfigCloud() {
       const name = document.getElementById('saveCfgName').value.trim();
       const is_public = document.getElementById('saveCfgPublic').checked;
-      if(!name) return toast('Please enter a config name.', 'error');
-      
+      if (!name) return toast('Please enter a config name.', 'error');
       const res = await apiFetch('/api/saved', {
         method: 'POST',
         body: JSON.stringify({ name, is_public, config: collectConfig() })
       });
-      if(res.ok) {
+      if (res.ok) {
         toast('Config saved!', 'success');
         document.getElementById('saveCfgName').value = '';
+        document.getElementById('saveCfgPublic').checked = false;
         loadCloudConfigs();
       } else {
-        toast('Error saving config.', 'error');
+        const d = await res.json().catch(() => ({}));
+        toast('Error: ' + (d.error || 'Failed to save.'), 'error');
       }
     }
 
     async function loadConfigCloud(id) {
-      if(!confirm('This will overwrite your current settings. Continue?')) return;
+      if (!confirm('This will overwrite your current settings. Continue?')) return;
       const res = await apiFetch('/api/saved/' + id + '/load', { method: 'POST' });
-      if(res.ok) {
-        toast('Config loaded successfully!', 'success');
+      if (res.ok) {
+        toast('Config loaded!', 'success');
         await loadConfig();
         loadCloudConfigs();
       } else {
-        toast('Error loading config.', 'error');
+        const d = await res.json().catch(() => ({}));
+        toast('Error: ' + (d.error || 'Failed to load.'), 'error');
       }
     }
 
     async function deleteConfigCloud(id) {
-      if(!confirm('Delete this config forever?')) return;
+      if (!confirm('Delete this config forever?')) return;
       const res = await apiFetch('/api/saved/' + id, { method: 'DELETE' });
-      if(res.ok) {
+      if (res.ok) {
         toast('Config deleted.', 'info');
         loadCloudConfigs();
+      } else {
+        toast('Error deleting config.', 'error');
       }
     }
 
-    // Load configs when switching to cloud tab
+    // Load when switching to saved tab
     const _switchTab = switchTab;
     switchTab = function(name, el) {
       _switchTab(name, el);
-      if(name === 'saved') loadCloudConfigs();
+      if (name === 'saved') loadCloudConfigs();
     };
+
 
 
     async function loadConfig() {
