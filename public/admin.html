@@ -494,9 +494,13 @@
             <div style="display:flex;flex-direction:column;gap:0.75rem;">
               <label class="input-label">Carica nuovo payload.zip (max 30 MB)</label>
               <input type="file" id="payload-file-input" accept=".zip" style="display:none" onchange="uploadPayload(this)"/>
-              <button class="btn btn-primary" onclick="document.getElementById('payload-file-input').click()">
+              <button class="btn btn-primary" id="payload-upload-btn" onclick="document.getElementById('payload-file-input').click()">
                 ⬆️ Seleziona e Carica ZIP
               </button>
+              <!-- Progress bar -->
+              <div id="payload-progress-wrap" style="display:none;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden;height:8px;">
+                <div id="payload-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#818cf8);transition:width 0.2s ease;border-radius:8px;"></div>
+              </div>
               <div id="payload-upload-result" style="font-size:0.85rem;color:var(--text-2);"></div>
             </div>
             <hr style="margin:1.5rem 0;border-color:rgba(255,255,255,0.06);">
@@ -630,30 +634,68 @@
     async function uploadPayload(input) {
       const file = input.files[0];
       if (!file) return;
-      const result = document.getElementById('payload-upload-result');
-      result.textContent = `⏳ Caricamento ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)...`;
+
+      const result  = document.getElementById('payload-upload-result');
+      const bar     = document.getElementById('payload-progress-bar');
+      const wrap    = document.getElementById('payload-progress-wrap');
+      const btn     = document.getElementById('payload-upload-btn');
+
+      // Mostra barra e disabilita bottone
+      wrap.style.display = 'block';
+      bar.style.width    = '0%';
+      btn.disabled       = true;
+      btn.textContent    = '⏳ Caricamento...';
+      result.textContent = `Caricamento ${file.name} — 0%`;
       result.style.color = 'var(--text-2)';
-      try {
-        const res = await apiFetch('/api/admin/upload-payload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/zip' },
-          body: file
-        });
-        const data = await res.json();
-        if (res.ok) {
-          result.style.color = 'var(--success)';
-          result.textContent = `✅ Upload completato — ${data.size_mb} MB salvati.`;
-          toast(`Payload aggiornato: ${data.size_mb} MB`, 'success');
-          loadPayloadStatus();
-        } else {
-          result.style.color = 'var(--danger)';
-          result.textContent = `❌ Errore: ${data.error}`;
+
+      const token = localStorage.getItem('ob_token');
+
+      const xhr = new XMLHttpRequest();
+
+      // Progresso upload
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          bar.style.width    = pct + '%';
+          result.textContent = `Caricamento ${file.name} — ${pct}%  (${(e.loaded/1024/1024).toFixed(1)} / ${(e.total/1024/1024).toFixed(1)} MB)`;
         }
-      } catch(e) {
-        result.style.color = 'var(--danger)';
-        result.textContent = `❌ Errore di rete: ${e.message}`;
-      }
-      input.value = ''; // reset file input
+      });
+
+      // Completato
+      xhr.addEventListener('load', () => {
+        btn.disabled    = false;
+        btn.textContent = '⬆️ Seleziona e Carica ZIP';
+        input.value     = '';
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          bar.style.background = 'linear-gradient(90deg,#22c55e,#4ade80)';
+          bar.style.width      = '100%';
+          result.style.color   = 'var(--success)';
+          result.textContent   = `✅ Upload completato — ${data.size_mb} MB salvati sul server.`;
+          toast(`Payload aggiornato: ${data.size_mb} MB`, 'success');
+          setTimeout(loadPayloadStatus, 800);
+        } else {
+          let msg = 'Errore sconosciuto';
+          try { msg = JSON.parse(xhr.responseText).error; } catch {}
+          bar.style.background = 'linear-gradient(90deg,#ef4444,#f87171)';
+          result.style.color   = 'var(--danger)';
+          result.textContent   = `❌ ${msg}`;
+        }
+      });
+
+      // Errore rete
+      xhr.addEventListener('error', () => {
+        btn.disabled    = false;
+        btn.textContent = '⬆️ Seleziona e Carica ZIP';
+        result.style.color   = 'var(--danger)';
+        result.textContent   = '❌ Errore di rete durante l\'upload.';
+        input.value = '';
+      });
+
+      xhr.open('POST', '/api/admin/upload-payload');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Content-Type', 'application/zip');
+      xhr.send(file);
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
