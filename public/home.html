@@ -510,40 +510,44 @@
       border-color: rgba(168,85,247,0.65);
     }
 
-    /* Left side: price + plan label stacked */
+    /* Left side: price + plan label */
     .prod-pricing-left {
       display: flex;
       align-items: baseline;
-      gap: 0.45rem;
-      flex-shrink: 0;
+      gap: 0.35rem;
+      flex-shrink: 1;    /* can compress if needed */
+      min-width: 0;
+      flex-wrap: wrap;   /* badge can wrap to next line */
     }
     .prod-pricing-price {
-      font-size: 1.45rem;
+      font-size: 1.15rem;
       font-weight: 900;
       color: #fff;
       letter-spacing: -0.01em;
       line-height: 1;
+      flex-shrink: 0;
     }
     .prod-pricing-plan {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: var(--text3);
       white-space: nowrap;
+      flex-shrink: 0;
     }
-    /* "Best value" tag on lifetime row */
+    /* "Best value" tag — on its own line below */
     .prod-best-tag {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
+      display: block;
+      width: fit-content;
+      padding: 0.12rem 0.45rem;
       background: rgba(124,58,237,0.25);
       border: 1px solid rgba(168,85,247,0.45);
       border-radius: 999px;
-      font-size: 0.58rem;
+      font-size: 0.52rem;
       font-weight: 800;
       color: #c084fc;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-left: 0.3rem;
-      vertical-align: middle;
+      margin-top: 0.15rem;
     }
 
     /* Right side: purchase button — compact so it never clips */
@@ -1307,7 +1311,8 @@
                   <div class="prod-pricing-item prod-pricing-item--lifetime">
                     <div class="prod-pricing-left">
                       <span class="prod-pricing-price">€150</span>
-                      <span class="prod-pricing-plan">lifetime<span class="prod-best-tag">Best value</span></span>
+                      <span class="prod-pricing-plan">lifetime</span>
+                      <span class="prod-best-tag">Best value</span>
                     </div>
                     <a href="https://discord.gg/oblivion" target="_blank" rel="noopener noreferrer" class="prod-discord-row-btn">
                       Purchase on Discord
