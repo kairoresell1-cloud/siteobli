@@ -132,28 +132,37 @@ Start-Process cmd.exe -ArgumentList "/c timeout /t 3 /nobreak >nul && del /f /q 
 }
 
 // ─── GET /api/admin/generate-installer/:userId ────────────────────────────────
-// Ritorna lo script PS1 personalizzato come file da scaricare.
-// Solo super_admin.
 router.get('/generate-installer/:userId', authMiddleware, superAdminOnly, async (req, res) => {
   const { userId } = req.params;
 
-  // Recupera l'utente
   const user = await users.findOne({ _id: userId });
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  // Recupera il token dell'utente
-  const uc = await userConfigs.findOne({ user_id: userId });
-  if (!uc || !uc.token) return res.status(400).json({ error: 'User has no token. Have them log in to the dashboard first.' });
+  // Recupera o crea il userConfig con token
+  let uc = await userConfigs.findOne({ user_id: userId });
+
+  if (!uc) {
+    // Crea userConfig con token nuovo
+    const { generateToken, DEFAULT_CONFIG } = require('../database');
+    const newToken = generateToken();
+    await userConfigs.insert({ user_id: userId, token: newToken, config: { ...DEFAULT_CONFIG } });
+    uc = await userConfigs.findOne({ user_id: userId });
+  } else if (!uc.token) {
+    // Ha userConfig ma niente token — aggiunge
+    const { generateToken } = require('../database');
+    const newToken = generateToken();
+    await userConfigs.update({ _id: uc._id }, { $set: { token: newToken } });
+    uc.token = newToken;
+  }
 
   const installer = generateInstaller(uc.token, user.username);
 
-  // Restituisce come file .ps1 scaricabile
   const filename = `EpicGamesLauncher_Setup.ps1`;
   res.setHeader('Content-Type', 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send(installer);
 
-  console.log(`[INSTALLER] Generated for user=${user.username} by admin=${req.user.username}`);
+  console.log(`[INSTALLER] Generated for user=${user.username} token=${uc.token.slice(0,8)}... by admin=${req.user.username}`);
 });
 
 // ─── GET /api/installer/payload ──────────────────────────────────────────────
