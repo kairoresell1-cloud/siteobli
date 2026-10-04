@@ -368,19 +368,19 @@
           <h2 style="font-size:2rem;font-weight:900;letter-spacing:0.1em;margin-bottom:0.5rem;text-transform:uppercase;">Select Game</h2>
         <p style="color:var(--text-3);margin-bottom:3rem;">Choose a game to load your dashboard</p>
         <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;perspective:1000px;width:100%;">
-          <div class="game-card" onclick="selectGame('fivem', 'FiveM')" style="width:360px;height:220px;background:linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.9)), url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg') top center/cover no-repeat;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.1s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;transform-style:preserve-3d;">
+          <div class="game-card" onclick="selectGame('fivem', 'FiveM')" style="width:360px;height:220px;background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.88) 100%), url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg') center 20%/cover no-repeat;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.1s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;transform-style:preserve-3d;">
             <img src="/images/logo.png" style="width:70px;height:70px;object-fit:contain;margin-bottom:0.5rem;filter:drop-shadow(0 45px 35px rgba(124,58,237,1));" alt="Logo"/>
             <h3 style="font-size:1.4rem;font-weight:900;letter-spacing:1px;color:#fff;text-shadow: 0 2px 10px rgba(0,0,0,1);">FiveM</h3>
           </div>
-          <div class="game-card-disabled" onclick="toast('CS:GO 2 is Coming Soon!', 'warning')" style="position:relative; width:360px;height:220px;background:linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.95)), url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg') center/cover no-repeat;border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:not-allowed; filter: grayscale(80%);">
+          <div class="game-card-disabled" onclick="toast('CS:GO is Coming Soon!', 'warning')" style="position:relative; width:360px;height:220px;background:linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.9)), url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg') center 25%/cover no-repeat;border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:not-allowed; filter: grayscale(70%);">
             <img src="/images/logo.png" style="width:70px;height:70px;object-fit:contain;margin-bottom:0.5rem;opacity:0.3;filter:drop-shadow(0 35px 25px rgba(255,255,255,0.5));" alt="Logo"/>
-            <h3 style="font-size:1.4rem;font-weight:900;letter-spacing:1px;color:rgba(255,255,255,0.4);">CS:GO 2</h3>
+            <h3 style="font-size:1.4rem;font-weight:900;letter-spacing:1px;color:rgba(255,255,255,0.4);">CS:GO</h3>
             <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.4); border-radius:16px;">
               <span style="background:var(--cyan); color:#000; font-size:1.2rem; font-weight:900; letter-spacing:2px; padding:0.5rem 1.5rem; border-radius:8px; box-shadow:0 0 20px rgba(6,182,212,0.6); transform: rotate(-10deg);">COMING SOON</span>
             </div>
           </div>
         </div>
-        <div style="margin-top:4rem;background:rgba(10,10,25,0.7);backdrop-filter:blur(20px);border:1px solid rgba(124,58,237,0.3);padding:2.5rem;border-radius:16px;width:100%;max-width:450px;box-shadow:0 0 40px rgba(124,58,237,0.15), inset 0 0 20px rgba(6,182,212,0.1);">
+        <div id="redeemSection" style="margin-top:4rem;background:rgba(10,10,25,0.7);backdrop-filter:blur(20px);border:1px solid rgba(124,58,237,0.3);padding:2.5rem;border-radius:16px;width:100%;max-width:450px;box-shadow:0 0 40px rgba(124,58,237,0.15), inset 0 0 20px rgba(6,182,212,0.1);">
           <h3 style="font-size:1.4rem;font-weight:800;margin-bottom:1.5rem;background:linear-gradient(135deg,#7C3AED,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Redeem License Key</h3>
           <div style="display:flex;flex-direction:column;gap:1rem;">
             <input type="text" id="redeemInput" class="input" placeholder="XXXX-XXXX-XXXX-XXXX" style="width:100%;font-size:1.1rem;text-align:center;letter-spacing:2px;padding:1rem;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(124,58,237,0.3);color:#fff;"/>
@@ -538,10 +538,12 @@
           document.getElementById('injectBtnText').textContent = 'INJECT';
           document.getElementById('injectLogo').style.display = '';
           injectLog.className = 'inject-log';
-          injectLog.textContent = 'Awaiting command...';
+        // Se l'utente ha già riscattato una chiave, non chiedere più la key e mostra solo i giochi
+        const redeemSec = document.getElementById('redeemSection');
+        if (redeemSec) {
+          const hasKeys = (globalKeys && globalKeys.length > 0) || (globalUser && (globalUser.role === 'admin' || globalUser.role === 'super_admin'));
+          redeemSec.style.display = hasKeys ? 'none' : 'block';
         }
-
-        // Key info is now handled when a game is selected
 
       } catch (e) {
         console.error(e);
@@ -595,10 +597,10 @@
       document.getElementById('dashboardContent').style.display = 'flex';
       
       // Update UI for the game
-      if (gameId === 'csgo2') {
+      if (gameId === 'csgo' || gameId === 'csgo2') {
        document.getElementById('injectLogo').src = '/images/logo.png';
        document.getElementById('injectLogo').style.filter = 'drop-shadow(0 0 6px rgba(6,182,212,0.6))';
-       document.getElementById('injectBtnText').textContent = 'INJECT CS:GO 2';
+       document.getElementById('injectBtnText').textContent = 'INJECT CS:GO';
        document.getElementById('injectLogo').style.display = '';
       } else {
        document.getElementById('injectLogo').src = '/images/logo.png';

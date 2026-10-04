@@ -283,11 +283,16 @@
 
     #products { text-align: center; }
 
+    @keyframes spinBorder {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     .prod-arena {
       display: flex;
-      gap: 2rem;
+      gap: 2.2rem;
       justify-content: center;
-      align-items: stretch;
+      align-items: flex-start; /* permette alla card di allungarsi verso il basso */
       perspective: 1200px;
       perspective-origin: 50% 40%;
       margin: 2.5rem auto 0;
@@ -295,34 +300,65 @@
       padding: 0 1rem;
     }
 
-    /* Wrapper per il tilt — riceve il transform */
+    /* Wrapper per il tilt — riceve il transform 3D */
     .prod-tilt {
       flex: 1;
-      max-width: 400px;
+      max-width: 410px;
+      position: relative;
       transform-style: preserve-3d;
       will-change: transform;
-      border-radius: 24px;
+      border-radius: 26px;
+    }
+
+    /* ── Luce perimetrale identica al LOGIN ── */
+    .prod-border-glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 26px;
+      z-index: 0;
+      overflow: hidden;
+      background: #000;
+      pointer-events: none;
+    }
+    .prod-border-glow::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, #000000 40%, #7C3AED 80%, #a855f7 100%);
+      animation: spinBorder 3s linear infinite;
+    }
+    .prod-border-glow::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent 40%, rgba(124,58,237,0.3) 80%, rgba(168,85,247,0.45) 100%);
+      animation: spinBorder 3s linear infinite;
+      filter: blur(12px);
     }
 
     /* Card base */
     .prod-card {
       position: relative;
-      background: rgba(6,6,16,0.75);
-      border: 1px solid rgba(255,255,255,0.09);
+      z-index: 1;
+      background: #060610;
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 24px;
-      padding: 2.4rem 2rem 2rem;
+      padding: 2.4rem 2rem 2.2rem;
       text-align: left;
       overflow: hidden;
       transform-style: preserve-3d;
       cursor: pointer;
-      transition: box-shadow 0.3s;
-      height: 100%;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      transition: box-shadow 0.35s ease, border-color 0.35s ease;
     }
-    .prod-card:hover { box-shadow: 0 24px 60px rgba(124,58,237,0.25); }
+    .prod-tilt:hover .prod-card {
+      box-shadow: 0 24px 60px rgba(124,58,237,0.28), 0 0 30px rgba(124,58,237,0.15);
+      border-color: rgba(124,58,237,0.35);
+    }
 
-    /* ── Sfondo gioco (background image) ── */
+    /* ── Sfondi gioco ── */
     .prod-card__bg {
       position: absolute;
       inset: 0;
@@ -330,12 +366,12 @@
       background-position: center;
       border-radius: 24px;
       z-index: 0;
-      transition: transform 0.6s ease, opacity 0.3s;
-      transform: scale(1.04);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+      transform: scale(1.03);
     }
     .prod-tilt:hover .prod-card__bg { transform: scale(1.08); }
 
-    /* Overlay scuro sopra l'immagine per leggibilità */
+    /* Overlay scuro sopra l'immagine */
     .prod-card__overlay {
       position: absolute;
       inset: 0;
@@ -343,91 +379,44 @@
       z-index: 0;
       background: linear-gradient(
         160deg,
-        rgba(6,6,16,0.82) 0%,
-        rgba(6,6,16,0.65) 45%,
-        rgba(6,6,16,0.88) 100%
+        rgba(6,6,16,0.85) 0%,
+        rgba(6,6,16,0.68) 45%,
+        rgba(6,6,16,0.92) 100%
       );
-    }
-    /* Card disabled: overlay più scuro */
-    .prod-card--disabled .prod-card__overlay {
-      background: rgba(6,6,16,0.88);
     }
 
-    /* ── Luce perimetrale animata — SOLO SUL BORDO ── */
-    /* Un wrapper esterno che fa da cornice */
-    .prod-border-ring {
-      position: absolute;
-      inset: -2px;
-      border-radius: 26px;
-      pointer-events: none;
-      z-index: 10;
-      padding: 2px;
-      /* conic-gradient animato come sfondo, mascherato per mostrare solo il bordo */
-      background: conic-gradient(from var(--angle),
-        transparent 0deg,
-        transparent 55deg,
-        #06B6D4 80deg,
-        #7C3AED 150deg,
-        #a855f7 195deg,
-        transparent 235deg,
-        transparent 360deg
-      );
-      -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-      mask-composite: exclude;
-      animation: spin-border var(--border-speed) linear infinite;
-    }
-    /* Glow dietro il bordo */
-    .prod-border-ring::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 28px;
-      background: conic-gradient(from var(--angle),
-        transparent 0deg,
-        transparent 55deg,
-        rgba(6,182,212,0.35) 80deg,
-        rgba(124,58,237,0.3) 150deg,
-        transparent 235deg,
-        transparent 360deg
-      );
-      animation: spin-border var(--border-speed) linear infinite;
-      filter: blur(5px);
-      z-index: -1;
-    }
-    @keyframes spin-border {
-      to { --angle: 360deg; }
+    /* Contenuto interno card */
+    .prod-card__inner {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
     }
 
     /* ── Parallasse layer ── */
     .prod-card__badge {
-      transform: translateZ(28px);
+      transform: translateZ(24px);
       align-self: flex-start;
-      margin-bottom: 1.4rem;
+      margin-bottom: 1.3rem;
     }
     .prod-card__title {
-      font-size: 1.6rem; font-weight: 900; letter-spacing: 0.04em;
-      transform: translateZ(22px);
+      font-size: 1.65rem; font-weight: 900; letter-spacing: 0.03em;
+      transform: translateZ(28px);
       background: var(--grad);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.35rem;
     }
     .prod-card__sub {
       font-size: 0.8rem; color: var(--text3);
-      transform: translateZ(14px);
-      margin-bottom: 1.6rem;
+      transform: translateZ(16px);
+      margin-bottom: 1.5rem;
     }
     .prod-card__features {
       list-style: none;
       display: flex; flex-direction: column; gap: 0.55rem;
-      transform: translateZ(10px);
-      margin-bottom: auto;
+      transform: translateZ(14px);
     }
     .prod-card__features li {
       font-size: 0.82rem; color: var(--text2);
@@ -437,62 +426,122 @@
       content: '✓'; color: #06B6D4; font-weight: 800; font-size: 0.75rem;
     }
 
-    /* ── Bottoni hover ── */
+    /* ── Azioni a scomparsa: IL RIQUADRO SI ALLUNGA SU HOVER ── */
     .prod-card__actions {
-      display: flex; flex-direction: column; gap: 0.7rem;
-      margin-top: 1.8rem;
-      transform: translateZ(30px);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateZ(32px) translateY(12px);
+      transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.35s ease,
+                  margin-top 0.35s ease,
+                  transform 0.35s ease;
     }
-    /* Su desktop nasconde e fa slide-up */
-    @media (hover: hover) {
-      .prod-card__actions {
-        opacity: 0;
-        transform: translateZ(30px) translateY(14px);
-        transition: opacity 0.25s ease, transform 0.25s ease;
-      }
-      .prod-tilt:hover .prod-card__actions {
-        opacity: 1;
-        transform: translateZ(30px) translateY(0);
-      }
-    }
-
-    .prod-btn-price {
-      display: flex; align-items: center; justify-content: center;
-      padding: 0.75rem 1.5rem;
-      border: 1px solid rgba(124,58,237,0.5);
-      background: rgba(124,58,237,0.06);
-      color: var(--text2); border-radius: 12px;
-      font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em;
-      cursor: default; pointer-events: none;
-    }
-    .prod-btn-purchase {
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      padding: 0.9rem 1.5rem;
-      background: linear-gradient(135deg, #7C3AED, #06B6D4);
-      color: #fff; text-decoration: none; border-radius: 12px;
-      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em;
-      box-shadow: 0 0 24px rgba(124,58,237,0.35);
-      transition: box-shadow 0.2s, filter 0.2s;
-    }
-    .prod-btn-purchase:hover { box-shadow: 0 0 40px rgba(124,58,237,0.6); filter: brightness(1.1); }
-    .prod-btn-purchase:focus-visible {
-      outline: 2px solid #06B6D4; outline-offset: 3px;
+    .prod-tilt:hover .prod-card__actions {
+      max-height: 280px;
+      opacity: 1;
+      margin-top: 1.5rem;
+      transform: translateZ(32px) translateY(0);
     }
 
-    /* ── CSGO card disabled ── */
+    /* Griglia Prezzi 2 opzioni: Month €55 e Lifetime €150 */
+    .prod-pricing-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      width: 100%;
+    }
+    .prod-plan-card {
+      background: rgba(124, 58, 237, 0.08);
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      box-shadow: inset 0 0 14px rgba(124, 58, 237, 0.08);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .prod-plan-card:hover {
+      background: rgba(124, 58, 237, 0.18);
+      border-color: rgba(168, 85, 247, 0.65);
+    }
+    .prod-plan-name {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .prod-plan-price {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    /* Riquadro Discord rettangolare solido */
+    .prod-discord-rect {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.9rem 1.4rem;
+      background: #5865F2;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px; /* RETTANGOLO */
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      box-shadow: 0 4px 20px rgba(88, 101, 242, 0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .prod-discord-rect:hover {
+      background: #4752c4;
+      box-shadow: 0 6px 30px rgba(88, 101, 242, 0.7);
+      transform: translateY(-2px);
+    }
+    .prod-discord-rect svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ── CS:GO card (Coming Soon) ── */
     .prod-tilt--disabled { cursor: not-allowed; }
     .prod-card--disabled {
-      opacity: 0.45;
+      opacity: 0.75;
       cursor: not-allowed;
+      filter: grayscale(40%);
+    }
+    .prod-card--disabled .prod-card__overlay {
+      background: linear-gradient(
+        160deg,
+        rgba(6,6,16,0.72) 0%,
+        rgba(6,6,16,0.52) 45%,
+        rgba(6,6,16,0.85) 100%
+      );
     }
     .prod-card--disabled * { pointer-events: none; }
-    .prod-card__title--strike { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.3); }
+    .prod-tilt--disabled .prod-border-glow {
+      opacity: 0.22;
+    }
+    .prod-card__title--strike { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 
     .prod-soon-badge {
       display: inline-block;
       padding: 0.25rem 0.7rem;
-      background: rgba(255,160,0,0.12);
-      border: 1px solid rgba(255,160,0,0.35);
+      background: rgba(255,160,0,0.14);
+      border: 1px solid rgba(255,160,0,0.4);
       color: #fbbf24; border-radius: 999px;
       font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -500,8 +549,8 @@
     .prod-active-badge {
       display: inline-flex; align-items: center; gap: 0.35rem;
       padding: 0.25rem 0.75rem;
-      background: rgba(16,185,129,0.1);
-      border: 1px solid rgba(16,185,129,0.3);
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.35);
       color: #10b981; border-radius: 999px;
       font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -515,6 +564,15 @@
     }
     @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
+    /* Su mobile / touch, mostra i prezzi e il bottone */
+    @media (max-width: 680px) {
+      .prod-card__actions {
+        max-height: none;
+        opacity: 1;
+        margin-top: 1.5rem;
+        transform: none;
+      }
+    }
     /* ── Testo sotto le card ── */
     .prod-footer {
       margin-top: 2.5rem;
@@ -1006,9 +1064,9 @@
             <img src="https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg" class="trigger-bg"/>
             <span>FiveM</span>
           </div>
-          <div class="sc-trigger" onclick="lockScreen('CS:GO 2', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseenter="showScreen('CS:GO 2', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseleave="hideScreen()">
+          <div class="sc-trigger" onclick="lockScreen('CS:GO', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseenter="showScreen('CS:GO', 'https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg')" onmouseleave="hideScreen()">
             <img src="https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg" class="trigger-bg"/>
-            <span>CS:GO 2</span>
+            <span>CS:GO</span>
           </div>
         </div>
   
@@ -1135,26 +1193,24 @@
 
       <div class="prod-arena">
 
-        <!-- ── CARD 1: FiveM (attiva) ── -->
-        <div class="prod-tilt" id="tilt-fivem" tabindex="0" role="article" aria-label="FiveM External product">
+        <!-- ── CARD 1: FiveM Kernel (attiva) ── -->
+        <div class="prod-tilt" id="tilt-fivem" tabindex="0" role="article" aria-label="FiveM Kernel product">
+          <!-- Luce rotante identica al login -->
+          <div class="prod-border-glow"></div>
           <div class="prod-card prod-card--active">
-            <!-- Sfondo GTA V (stessa immagine dello showcase) -->
-            <div class="prod-card__bg" style="background-image: url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg');"></div>
-            <!-- Overlay leggero per leggibilità -->
+            <!-- Sfondo GTA V -->
+            <div class="prod-card__bg" style="background-image: url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg'); background-position: center 20%;"></div>
             <div class="prod-card__overlay"></div>
-            <!-- Bordo luminoso perimetrale -->
-            <div class="prod-border-ring"></div>
-            <!-- Contenuto -->
-            <div class="prod-card__inner" style="position:relative;z-index:1;display:flex;flex-direction:column;flex:1;">
 
+            <div class="prod-card__inner">
               <div class="prod-card__badge">
                 <span class="prod-active-badge">Live</span>
               </div>
 
-              <div class="prod-card__title">FiveM External</div>
+              <div class="prod-card__title">FiveM Kernel</div>
               <div class="prod-card__sub">
-                <span class="en">GTA V / FiveM — External kernel-level cheat</span>
-                <span class="it">GTA V / FiveM — Cheat esterno kernel-level</span>
+                <span class="en">FiveM — Kernel-level cheat</span>
+                <span class="it">FiveM — Cheat kernel-level</span>
               </div>
 
               <ul class="prod-card__features">
@@ -1165,35 +1221,48 @@
                 <li><span class="en">No Secure Boot required</span><span class="it">Nessun Secure Boot richiesto</span></li>
               </ul>
 
+              <!-- Azioni che appaiono e allungano la card al passaggio del mouse -->
               <div class="prod-card__actions">
-                <div class="prod-btn-price" aria-label="Price">💰 &nbsp;<span id="fivem-price-label">€19.99</span> &nbsp;/ month</div>
-                <a href="https://discord.gg/oblivion" target="_blank" class="prod-btn-purchase" rel="noopener">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36" fill="#fff" style="flex-shrink:0"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-                  Purchase on Discord
+                <div class="prod-pricing-row">
+                  <div class="prod-plan-card">
+                    <span class="prod-plan-name">Month</span>
+                    <span class="prod-plan-price">€55</span>
+                  </div>
+                  <div class="prod-plan-card">
+                    <span class="prod-plan-name">Lifetime</span>
+                    <span class="prod-plan-price">€150</span>
+                  </div>
+                </div>
+
+                <a href="https://discord.gg/oblivion" target="_blank" rel="noopener" class="prod-discord-rect">
+                  <svg class="discord-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36">
+                    <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+                  </svg>
+                  <span>Join Discord</span>
                 </a>
               </div>
-
             </div>
           </div>
         </div>
 
-        <!-- ── CARD 2: CS:GO (coming soon, disabilitata) ── -->
-        <div class="prod-tilt prod-tilt--disabled" id="tilt-csgo" aria-disabled="true" role="article" aria-label="CS2 / CS:GO — Coming Soon">
+        <!-- ── CARD 2: CS:GO (Coming Soon, disabilitata) ── -->
+        <div class="prod-tilt prod-tilt--disabled" id="tilt-csgo" aria-disabled="true" role="article" aria-label="CS:GO — Coming Soon">
+          <!-- Luce debole -->
+          <div class="prod-border-glow"></div>
           <div class="prod-card prod-card--disabled">
-            <!-- Sfondo CS:GO (oscurato tramite overlay) -->
-            <div class="prod-card__bg" style="background-image: url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg');"></div>
+            <!-- Sfondo CS:GO inquadrato bene -->
+            <div class="prod-card__bg" style="background-image: url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg'); background-position: center 25%;"></div>
             <div class="prod-card__overlay"></div>
-            <!-- Contenuto -->
-            <div class="prod-card__inner" style="position:relative;z-index:1;display:flex;flex-direction:column;flex:1;">
 
+            <div class="prod-card__inner">
               <div class="prod-card__badge">
                 <span class="prod-soon-badge">Coming Soon</span>
               </div>
 
-              <div class="prod-card__title prod-card__title--strike">CS2 / CS:GO</div>
+              <div class="prod-card__title prod-card__title--strike">CS:GO</div>
               <div class="prod-card__sub">
-                <span class="en">Counter-Strike 2 — In development</span>
-                <span class="it">Counter-Strike 2 — In sviluppo</span>
+                <span class="en">CS:GO — In development</span>
+                <span class="it">CS:GO — In sviluppo</span>
               </div>
 
               <ul class="prod-card__features">
@@ -1203,7 +1272,6 @@
                 <li><span class="en">Kernel-level bypass</span><span class="it">Bypass kernel-level</span></li>
                 <li><span class="en">VAC &amp; Faceit undetected</span><span class="it">Undetected VAC &amp; Faceit</span></li>
               </ul>
-
             </div>
           </div>
         </div>
@@ -1336,16 +1404,10 @@
 
 <!-- ======= 3D TILT ENGINE ======= -->
 <script>
-  /* ── Config (cambia qui) ── */
-  const PROD_PRICE       = '€19.99';          // Prezzo FiveM
-  const PROD_DISCORD_URL = 'https://discord.gg/oblivion'; // Link acquisto
+  /* ── 3D Tilt Config (peso e inerzia mouse) ── */
   const TILT_MAX         = 13;                // Gradi rotazione max
-  const TILT_SPRING      = 0.09;              // Inerzia (0.05=lento, 0.15=veloce)
-  const TILT_SCALE_HOVER = 1.028;             // Scale su hover
-
-  /* Aggiorna il prezzo a runtime */
-  const pl = document.getElementById('fivem-price-label');
-  if (pl) pl.textContent = PROD_PRICE;
+  const TILT_SPRING      = 0.085;             // Inerzia / peso (0.05=pesante, 0.15=veloce)
+  const TILT_SCALE_HOVER = 1.025;             // Leggero sollevamento su hover
 
   /* Rispetta prefers-reduced-motion */
   const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
