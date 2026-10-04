@@ -267,76 +267,83 @@
     /* ========= PRODUCT CARDS 3D ========= */
     /* ── Config variables (easy to tweak) ── */
     :root {
-      --prod-price: "€19.99";       /* Prezzo FiveM */
-      --prod-discord-url: "https://discord.gg/oblivion"; /* Link Discord */
-      --tilt-intensity: 14deg;      /* Rotazione max tilt */
-      --tilt-spring: 0.09;          /* Inerzia (0.05=lento, 0.15=scattante) */
-      --border-speed: 4s;           /* Velocità luce perimetrale */
+      --prod-discord-url: "https://discord.gg/oblivion";
+      --tilt-intensity: 14deg;
+      --tilt-spring: 0.09;
+      --border-speed: 3s;
     }
 
-    /* @property per animazione conic-gradient */
-    @property --angle {
-      syntax: '<angle>';
-      initial-value: 0deg;
-      inherits: false;
+    @keyframes spinBorder {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     #products { text-align: center; }
-
-    @keyframes spinBorder {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
 
     .prod-arena {
       display: flex;
       gap: 2.2rem;
       justify-content: center;
-      align-items: flex-start; /* permette alla card di allungarsi verso il basso */
-      perspective: 1200px;
+      align-items: flex-start;
+      /* perspective lives here so both cards share the same vanishing point */
+      perspective: 1100px;
       perspective-origin: 50% 40%;
       margin: 2.5rem auto 0;
       max-width: 900px;
       padding: 0 1rem;
     }
 
-    /* Wrapper per il tilt — riceve il transform 3D */
+    /* ── Wrapper tilt: receives the 3D transform ── */
     .prod-tilt {
       flex: 1;
       max-width: 410px;
       position: relative;
+      /* preserve-3d propagates depth to ALL children */
       transform-style: preserve-3d;
       will-change: transform;
       border-radius: 26px;
+      /* NO overflow:hidden here — that flattens 3D children */
     }
 
-    /* ── Luce perimetrale identica al LOGIN ── */
+    /* ── Rotating border glow (identical to login) ── */
     .prod-border-glow {
       position: absolute;
       inset: -2px;
-      border-radius: 26px;
+      border-radius: 28px;
       z-index: 0;
-      overflow: hidden;
+      overflow: hidden;     /* overflow:hidden is safe here — no 3D children inside */
       background: #000;
       pointer-events: none;
+      transform: translateZ(-1px); /* push behind the card */
     }
     .prod-border-glow::before {
       content: '';
       position: absolute;
       top: -50%; left: -50%; width: 200%; height: 200%;
       background: conic-gradient(from 0deg, #000000 40%, #7C3AED 80%, #a855f7 100%);
-      animation: spinBorder 3s linear infinite;
+      animation: spinBorder var(--border-speed) linear infinite;
     }
     .prod-border-glow::after {
       content: '';
       position: absolute;
       top: -50%; left: -50%; width: 200%; height: 200%;
       background: conic-gradient(from 0deg, transparent 40%, rgba(124,58,237,0.3) 80%, rgba(168,85,247,0.45) 100%);
-      animation: spinBorder 3s linear infinite;
+      animation: spinBorder var(--border-speed) linear infinite;
       filter: blur(12px);
     }
 
-    /* Card base */
+    /* ── Clip layer: handles border-radius + overflow, NO 3D children ── */
+    /* This is the ONLY element allowed to have overflow:hidden */
+    .prod-card__clip {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      overflow: hidden;       /* clips bg image + overlay only */
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Card shell: the visible glass surface ── */
     .prod-card {
       position: relative;
       z-index: 1;
@@ -345,7 +352,7 @@
       border-radius: 24px;
       padding: 2.4rem 2rem 2.2rem;
       text-align: left;
-      overflow: hidden;
+      /* NO overflow:hidden — it would kill preserve-3d for children */
       transform-style: preserve-3d;
       cursor: pointer;
       display: flex;
@@ -354,55 +361,70 @@
       transition: box-shadow 0.35s ease, border-color 0.35s ease;
     }
     .prod-tilt:hover .prod-card {
-      box-shadow: 0 24px 60px rgba(124,58,237,0.28), 0 0 30px rgba(124,58,237,0.15);
-      border-color: rgba(124,58,237,0.35);
+      box-shadow:
+        0 28px 60px rgba(124,58,237,0.30),
+        0 0 30px rgba(124,58,237,0.15);
+      border-color: rgba(124,58,237,0.40);
     }
 
-    /* ── Sfondi gioco ── */
+    /* ── Game background image — lives INSIDE .prod-card__clip, no 3D ── */
     .prod-card__bg {
       position: absolute;
       inset: 0;
       background-size: cover;
       background-position: center;
-      border-radius: 24px;
       z-index: 0;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+      transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
       transform: scale(1.03);
     }
-    .prod-tilt:hover .prod-card__bg { transform: scale(1.08); }
+    .prod-tilt:hover .prod-card__bg { transform: scale(1.1); }
 
-    /* Overlay scuro sopra l'immagine */
+    /* Dark overlay — also inside .prod-card__clip */
     .prod-card__overlay {
       position: absolute;
       inset: 0;
-      border-radius: 24px;
-      z-index: 0;
+      z-index: 1;
       background: linear-gradient(
         160deg,
-        rgba(6,6,16,0.85) 0%,
+        rgba(6,6,16,0.88) 0%,
         rgba(6,6,16,0.68) 45%,
-        rgba(6,6,16,0.92) 100%
+        rgba(6,6,16,0.94) 100%
       );
     }
 
-    /* Contenuto interno card */
+    /* ── Glare: soft light that follows the cursor ── */
+    .prod-card__glare {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.07) 0%, transparent 65%);
+    }
+    .prod-tilt:hover .prod-card__glare { opacity: 1; }
+
+    /* ── Inner content — all children get translateZ for real depth ── */
     .prod-card__inner {
       position: relative;
       z-index: 2;
       display: flex;
       flex-direction: column;
       flex: 1;
+      /* transform-style must NOT be set here if children use translateZ
+         — inherit from .prod-card is enough */
     }
 
-    /* ── Parallasse layer ── */
+    /* ── Depth layers (translateZ = pops toward viewer) ── */
     .prod-card__badge {
-      transform: translateZ(24px);
+      transform: translateZ(30px);
       align-self: flex-start;
       margin-bottom: 1.3rem;
     }
     .prod-card__title {
       font-size: 1.65rem; font-weight: 900; letter-spacing: 0.03em;
-      transform: translateZ(28px);
+      transform: translateZ(36px);
       background: var(--grad);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -410,13 +432,13 @@
     }
     .prod-card__sub {
       font-size: 0.8rem; color: var(--text3);
-      transform: translateZ(16px);
+      transform: translateZ(22px);
       margin-bottom: 1.5rem;
     }
     .prod-card__features {
       list-style: none;
       display: flex; flex-direction: column; gap: 0.55rem;
-      transform: translateZ(14px);
+      transform: translateZ(18px);
     }
     .prod-card__features li {
       font-size: 0.82rem; color: var(--text2);
@@ -426,90 +448,137 @@
       content: '✓'; color: #06B6D4; font-weight: 800; font-size: 0.75rem;
     }
 
-    /* ── Azioni a scomparsa: IL RIQUADRO SI ALLUNGA SU HOVER ── */
+    /* ── Actions: slide in on hover ── */
     .prod-card__actions {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.65rem;
       margin-top: 0;
       max-height: 0;
       opacity: 0;
       overflow: hidden;
-      transform: translateZ(32px) translateY(12px);
-      transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-                  opacity 0.35s ease,
-                  margin-top 0.35s ease,
-                  transform 0.35s ease;
+      transform: translateZ(40px) translateY(12px);
+      transition:
+        max-height 0.45s cubic-bezier(0.16,1,0.3,1),
+        opacity    0.35s ease,
+        margin-top 0.35s ease,
+        transform  0.35s ease;
     }
     .prod-tilt:hover .prod-card__actions {
-      max-height: 280px;
+      max-height: 320px;
       opacity: 1;
       margin-top: 1.5rem;
-      transform: translateZ(32px) translateY(0);
+      transform: translateZ(40px) translateY(0);
     }
 
-    /* Griglia Prezzi 2 opzioni: Month €55 e Lifetime €150 */
-    /* ── Pricing: vertical list, one row per plan ── */
+    /* ════════════════════════════════════════
+       PRICING ROWS — redesigned
+       Left: big price + plan label
+       Right: Purchase on Discord button (fixed min-width, no wrap)
+       ════════════════════════════════════════ */
     .prod-pricing-list {
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.55rem;
       width: 100%;
     }
+
     .prod-pricing-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.55rem 0.85rem;
-      background: rgba(124, 58, 237, 0.07);
-      border: 1px solid rgba(124, 58, 237, 0.28);
-      border-radius: 8px;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(124,58,237,0.22);
+      border-radius: 10px;
       transition: background 0.2s, border-color 0.2s;
     }
     .prod-pricing-item:hover {
-      background: rgba(124, 58, 237, 0.14);
-      border-color: rgba(168, 85, 247, 0.55);
+      background: rgba(124,58,237,0.10);
+      border-color: rgba(168,85,247,0.50);
     }
-    .prod-pricing-label {
-      font-size: 0.9rem;
-      font-weight: 800;
+
+    /* Lifetime row gets a subtle premium highlight */
+    .prod-pricing-item--lifetime {
+      border-color: rgba(124,58,237,0.40);
+      background: rgba(124,58,237,0.07);
+      box-shadow: inset 0 0 20px rgba(124,58,237,0.06);
+    }
+    .prod-pricing-item--lifetime:hover {
+      background: rgba(124,58,237,0.14);
+      border-color: rgba(168,85,247,0.65);
+    }
+
+    /* Left side: price + plan label stacked */
+    .prod-pricing-left {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+    .prod-pricing-price {
+      font-size: 1.45rem;
+      font-weight: 900;
       color: #fff;
-      white-space: nowrap;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.01em;
+      line-height: 1;
     }
-    /* Purchase on Discord inline button */
+    .prod-pricing-plan {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text3);
+      white-space: nowrap;
+    }
+    /* "Best value" tag on lifetime row */
+    .prod-best-tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      background: rgba(124,58,237,0.25);
+      border: 1px solid rgba(168,85,247,0.45);
+      border-radius: 999px;
+      font-size: 0.58rem;
+      font-weight: 800;
+      color: #c084fc;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+    }
+
+    /* Right side: purchase button — fixed width so both rows line up */
     .prod-discord-row-btn {
       flex-shrink: 0;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.4rem 0.9rem;
+      justify-content: center;
+      min-width: 148px;
+      padding: 0.5rem 1rem;
       background: #5865F2;
       border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 6px;
+      border-radius: 7px;
       color: #fff;
       text-decoration: none;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 800;
       letter-spacing: 0.04em;
       white-space: nowrap;
-      box-shadow: 0 2px 12px rgba(88,101,242,0.4);
+      box-shadow: 0 2px 12px rgba(88,101,242,0.38);
       transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
     }
     .prod-discord-row-btn:hover {
       background: #4752c4;
-      box-shadow: 0 4px 20px rgba(88,101,242,0.65);
+      box-shadow: 0 4px 22px rgba(88,101,242,0.65);
       transform: translateY(-1px);
     }
-    /* Mobile: stack label above button if needed */
-    @media (max-width: 400px) {
-      .prod-pricing-item { flex-direction: column; align-items: flex-start; }
-      .prod-discord-row-btn { width: 100%; justify-content: center; }
+
+    /* ── Responsive: stack on tiny screens ── */
+    @media (max-width: 420px) {
+      .prod-pricing-item { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+      .prod-discord-row-btn { width: 100%; min-width: unset; }
     }
 
-
-    /* ── CS:GO card (Coming Soon) ── */
+    /* ── CS:GO card (disabled) ── */
     .prod-tilt--disabled { cursor: not-allowed; }
     .prod-card--disabled {
       opacity: 0.75;
@@ -525,11 +594,13 @@
       );
     }
     .prod-card--disabled * { pointer-events: none; }
-    .prod-tilt--disabled .prod-border-glow {
-      opacity: 0.22;
+    .prod-tilt--disabled .prod-border-glow { opacity: 0.22; }
+    .prod-card__title--strike {
+      text-decoration: line-through;
+      text-decoration-color: rgba(255,255,255,0.4);
     }
-    .prod-card__title--strike { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 
+    /* ── Status badges ── */
     .prod-soon-badge {
       display: inline-block;
       padding: 0.25rem 0.7rem;
@@ -557,16 +628,29 @@
     }
     @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
-    /* Su mobile / touch, mostra i prezzi e il bottone */
+    /* Mobile: always show actions on touch devices */
     @media (max-width: 680px) {
+      .prod-arena { flex-direction: column; align-items: center; }
+      .prod-tilt { max-width: 100%; width: 100%; }
       .prod-card__actions {
-        max-height: none;
-        opacity: 1;
-        margin-top: 1.5rem;
-        transform: none;
+        max-height: none !important;
+        opacity: 1 !important;
+        margin-top: 1.5rem !important;
+        transform: translateZ(40px) translateY(0) !important;
+        overflow: visible !important;
       }
     }
-    /* ── Testo sotto le card ── */
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .prod-tilt { transform: none !important; transition: none !important; }
+      .prod-border-glow::before,
+      .prod-border-glow::after { animation: none !important; }
+      .prod-active-badge::before { animation: none !important; }
+      .prod-card__bg { transition: none !important; }
+    }
+
+    /* ── Footer below cards ── */
     .prod-footer {
       margin-top: 2.5rem;
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
@@ -581,24 +665,6 @@
     .prod-footer__sub { font-size: 0.82rem; color: var(--text3); }
     .prod-footer svg { width: 18px; height: 18px; fill: #5865F2; flex-shrink: 0; }
 
-    /* ── Responsive ── */
-    @media (max-width: 680px) {
-      .prod-arena { flex-direction: column; align-items: center; }
-      .prod-tilt { max-width: 100%; width: 100%; }
-      /* Su touch: bottoni sempre visibili */
-      .prod-card__actions {
-        opacity: 1 !important;
-        transform: translateZ(30px) translateY(0) !important;
-      }
-    }
-
-    /* ── Reduced motion ── */
-    @media (prefers-reduced-motion: reduce) {
-      .prod-card--active::before,
-      .prod-card--active::after { animation: none; }
-      .prod-tilt { transform: none !important; transition: none !important; }
-      .prod-active-badge::before { animation: none; }
-    }
 
     /* ========= FOOTER ========= */
     footer { position: relative; z-index: 1; text-align: center; padding: 2.5rem 2rem; color: var(--text3); font-size: .8rem; border-top: 1px solid var(--border); }
@@ -1186,15 +1252,23 @@
 
       <div class="prod-arena">
 
-        <!-- ── CARD 1: FiveM Kernel (attiva) ── -->
+        <!-- ── CARD 1: FiveM Kernel (active) ── -->
         <div class="prod-tilt" id="tilt-fivem" tabindex="0" role="article" aria-label="FiveM Kernel product">
-          <!-- Luce rotante identica al login -->
+          <!-- Rotating border glow -->
           <div class="prod-border-glow"></div>
-          <div class="prod-card prod-card--active">
-            <!-- Sfondo GTA V -->
-            <div class="prod-card__bg" style="background-image: url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg'); background-position: center 20%;"></div>
-            <div class="prod-card__overlay"></div>
 
+          <div class="prod-card prod-card--active">
+            <!-- __clip: the ONLY element with overflow:hidden — holds bg image + overlay so rounded corners clip them.
+                 It has NO 3D children, so preserve-3d on .prod-card is NOT broken. -->
+            <div class="prod-card__clip">
+              <div class="prod-card__bg" style="background-image: url('https://getwallpapers.com/wallpaper/full/5/a/3/441723.jpg'); background-position: center 20%;"></div>
+              <div class="prod-card__overlay"></div>
+            </div>
+
+            <!-- Glare: soft radial light that follows the cursor (updated by JS) -->
+            <div class="prod-card__glare" id="glare-fivem"></div>
+
+            <!-- All content below pops out in Z with translateZ — 3D is preserved here -->
             <div class="prod-card__inner">
               <div class="prod-card__badge">
                 <span class="prod-active-badge">Live</span>
@@ -1214,37 +1288,49 @@
                 <li><span class="en">No Secure Boot required</span><span class="it">Nessun Secure Boot richiesto</span></li>
               </ul>
 
-              <!-- Azioni che appaiono e allungano la card al passaggio del mouse -->
+              <!-- Actions: slide in on hover, push out in Z -->
               <div class="prod-card__actions">
                 <div class="prod-pricing-list">
+
                   <!-- Row: Month -->
                   <div class="prod-pricing-item">
-                    <span class="prod-pricing-label">€55 — Month</span>
+                    <div class="prod-pricing-left">
+                      <span class="prod-pricing-price">€55</span>
+                      <span class="prod-pricing-plan">/ month</span>
+                    </div>
                     <a href="https://discord.gg/oblivion" target="_blank" rel="noopener noreferrer" class="prod-discord-row-btn">
                       Purchase on Discord
                     </a>
                   </div>
-                  <!-- Row: Lifetime -->
-                  <div class="prod-pricing-item">
-                    <span class="prod-pricing-label">€150 — Lifetime</span>
+
+                  <!-- Row: Lifetime (premium highlight + Best value tag) -->
+                  <div class="prod-pricing-item prod-pricing-item--lifetime">
+                    <div class="prod-pricing-left">
+                      <span class="prod-pricing-price">€150</span>
+                      <span class="prod-pricing-plan">lifetime<span class="prod-best-tag">Best value</span></span>
+                    </div>
                     <a href="https://discord.gg/oblivion" target="_blank" rel="noopener noreferrer" class="prod-discord-row-btn">
                       Purchase on Discord
                     </a>
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- ── CARD 2: CS:GO (Coming Soon, disabilitata) ── -->
+        <!-- ── CARD 2: CS:GO (Coming Soon, disabled) ── -->
         <div class="prod-tilt prod-tilt--disabled" id="tilt-csgo" aria-disabled="true" role="article" aria-label="CS:GO — Coming Soon">
-          <!-- Luce debole -->
+          <!-- Dimmed border glow -->
           <div class="prod-border-glow"></div>
+
           <div class="prod-card prod-card--disabled">
-            <!-- Sfondo CS:GO inquadrato bene -->
-            <div class="prod-card__bg" style="background-image: url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg'); background-position: center 25%;"></div>
-            <div class="prod-card__overlay"></div>
+            <!-- Same clip structure — bg + overlay isolated so 3D children can still lift -->
+            <div class="prod-card__clip">
+              <div class="prod-card__bg" style="background-image: url('https://wallpapers.com/images/featured/cs-go-vb6tq1iva1c5g1ae.jpg'); background-position: center 25%;"></div>
+              <div class="prod-card__overlay"></div>
+            </div>
 
             <div class="prod-card__inner">
               <div class="prod-card__badge">
@@ -1267,6 +1353,7 @@
             </div>
           </div>
         </div>
+
 
       </div><!-- .prod-arena -->
 
@@ -1396,20 +1483,34 @@
 
 <!-- ======= 3D TILT ENGINE ======= -->
 <script>
-  /* ── 3D Tilt Config (peso e inerzia mouse) ── */
-  const TILT_MAX         = 13;                // Gradi rotazione max
-  const TILT_SPRING      = 0.085;             // Inerzia / peso (0.05=pesante, 0.15=veloce)
-  const TILT_SCALE_HOVER = 1.025;             // Leggero sollevamento su hover
+  /* ──────────────────────────────────────────────────
+     3D TILT CONFIG
+     ────────────────────────────────────────────────── */
+  const TILT_MAX         = 13;      // max rotation degrees
+  const TILT_SPRING      = 0.085;   // lerp factor — lower = heavier feel
+  const TILT_SCALE_HOVER = 1.025;   // subtle lift on hover
 
-  /* Rispetta prefers-reduced-motion */
+  /* Respect prefers-reduced-motion */
   const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (noMotion) return; // stop everything below
+  /* Detect touch — disable effect on touch-only devices */
+  const isTouch = window.matchMedia('(hover: none)').matches;
 
-  /* ── Tilt state per card ── */
+  if (noMotion || isTouch) {
+    /* On touch/reduced-motion, just skip — CSS already makes actions always visible on mobile */
+  } else {
+
+  /**
+   * makeTiltCard — sets up a full 3D tilt interaction on one product card.
+   * @param {string} wrapperId   — id of .prod-tilt element
+   * @param {string|null} glareId — id of .prod-card__glare element (null = skip)
+   * @param {boolean} disabled   — if true, apply a reduced passive tilt only
+   */
   function makeTiltCard(wrapperId, glareId, disabled) {
-    const wrap   = document.getElementById(wrapperId);
+    const wrap  = document.getElementById(wrapperId);
     if (!wrap) return;
-    const glare  = glareId ? document.getElementById(glareId) : null;
+    const glare = glareId ? document.getElementById(glareId) : null;
+    /* Background img — gets a subtle counter-parallax */
+    const bgEl  = wrap.querySelector('.prod-card__bg');
 
     let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
     let targetScale = 1, currentScale = 1;
@@ -1417,11 +1518,11 @@
     let rafId = null;
     let isVisible = false;
 
-    /* IntersectionObserver: stoppa rAF fuori vista */
+    /* Stop RAF when card is off-screen (perf) */
     const visObs = new IntersectionObserver(([e]) => {
       isVisible = e.isIntersecting;
-      if (isVisible) tick();
-      else if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      if (isVisible && (isHovered || Math.abs(currentX) > 0.01)) tick();
+      else if (!isVisible && rafId) { cancelAnimationFrame(rafId); rafId = null; }
     }, { threshold: 0.1 });
     visObs.observe(wrap);
 
@@ -1430,86 +1531,107 @@
     function tick() {
       currentX     = lerp(currentX, targetX, TILT_SPRING);
       currentY     = lerp(currentY, targetY, TILT_SPRING);
-      currentScale = lerp(currentScale, targetScale, TILT_SPRING * 1.4);
+      currentScale = lerp(currentScale, targetScale, TILT_SPRING * 1.5);
 
-      wrap.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg) scale(${currentScale})`;
+      /* Apply 3D tilt to the wrapper — perspective is on .prod-arena (parent) */
+      wrap.style.transform =
+        `rotateX(${currentX}deg) rotateY(${currentY}deg) scale(${currentScale})`;
 
-      /* Glare segue il cursore */
-      if (glare && isHovered) {
-        const normX = (targetY / TILT_MAX) * 50 + 50; // percentuale X
-        const normY = (-targetX / TILT_MAX) * 50 + 50; // percentuale Y
-        glare.style.background = `radial-gradient(circle at ${normX}% ${normY}%, rgba(255,255,255,0.10) 0%, transparent 60%)`;
+      /* Shift shadow opposite to tilt (feels physical) */
+      const shadowX = (-currentY / TILT_MAX) * 18;
+      const shadowY = ( currentX / TILT_MAX) * 18 + 10;
+      wrap.style.filter =
+        `drop-shadow(${shadowX}px ${shadowY}px 28px rgba(124,58,237,${isHovered ? 0.35 : 0.15}))`;
+
+      /* Glare: radial highlight follows cursor */
+      if (glare) {
+        const normX = (targetY / TILT_MAX) * 50 + 50;  // 0%–100% horizontal
+        const normY = (-targetX / TILT_MAX) * 50 + 50; // 0%–100% vertical
+        glare.style.background =
+          `radial-gradient(circle at ${normX}% ${normY}%, rgba(255,255,255,0.10) 0%, transparent 60%)`;
+        glare.style.opacity = isHovered ? '1' : '0';
       }
 
-      const atRest = Math.abs(currentX) < 0.01 && Math.abs(currentY) < 0.01 && Math.abs(currentScale - 1) < 0.001;
+      /* Background counter-parallax — moves slightly opposite to tilt */
+      if (bgEl) {
+        const px = (-currentY / TILT_MAX) * 10;
+        const py = (-currentX / TILT_MAX) * 10;
+        bgEl.style.transform = `scale(1.1) translate(${px}px, ${py}px)`;
+      }
+
+      const atRest =
+        Math.abs(currentX) < 0.01 &&
+        Math.abs(currentY) < 0.01 &&
+        Math.abs(currentScale - 1) < 0.001;
+
       if (!atRest || isHovered) {
         rafId = requestAnimationFrame(tick);
       } else {
         rafId = null;
+        /* Reset transforms cleanly */
+        wrap.style.transform = '';
+        wrap.style.filter    = '';
+        if (bgEl) bgEl.style.transform = 'scale(1.03)';
       }
     }
 
-    function startTick() { if (!rafId && isVisible) rafId = requestAnimationFrame(tick); }
+    function startTick() {
+      if (!rafId && isVisible) rafId = requestAnimationFrame(tick);
+    }
 
     if (!disabled) {
+      /* Full interactive tilt */
       wrap.addEventListener('mousemove', e => {
         const rect = wrap.getBoundingClientRect();
         const cx = rect.left + rect.width  / 2;
         const cy = rect.top  + rect.height / 2;
         const dx = (e.clientX - cx) / (rect.width  / 2); // -1..1
         const dy = (e.clientY - cy) / (rect.height / 2); // -1..1
+        /* rotateX: positive = top tilts toward viewer (cursor top) */
         targetX = -dy * TILT_MAX;
         targetY =  dx * TILT_MAX;
         startTick();
       });
 
       wrap.addEventListener('mouseenter', () => {
-        isHovered = true;
-        targetScale = TILT_SCALE_HOVER;
+        isHovered    = true;
+        targetScale  = TILT_SCALE_HOVER;
         startTick();
       });
 
       wrap.addEventListener('mouseleave', () => {
-        isHovered = false;
-        targetX = 0; targetY = 0; targetScale = 1;
+        isHovered   = false;
+        targetX     = 0;
+        targetY     = 0;
+        targetScale = 1;
         startTick();
-        if (glare) glare.style.opacity = '0';
       });
 
-      /* Focus da tastiera */
+      /* Keyboard focus — slight lift, no tilt */
       wrap.addEventListener('focus', () => { targetScale = TILT_SCALE_HOVER; startTick(); });
       wrap.addEventListener('blur',  () => { targetX = 0; targetY = 0; targetScale = 1; startTick(); });
+
     } else {
-      /* Card disabled: tilt leggero solo col mouse, no scale */
+      /* Disabled card: very gentle passive tilt, no scale-up */
       wrap.addEventListener('mousemove', e => {
         const rect = wrap.getBoundingClientRect();
         const cx = rect.left + rect.width  / 2;
         const cy = rect.top  + rect.height / 2;
         const dx = (e.clientX - cx) / (rect.width  / 2);
         const dy = (e.clientY - cy) / (rect.height / 2);
-        targetX = -dy * TILT_MAX * 0.35;
-        targetY =  dx * TILT_MAX * 0.35;
+        targetX = -dy * TILT_MAX * 0.3;
+        targetY =  dx * TILT_MAX * 0.3;
         startTick();
       });
       wrap.addEventListener('mouseleave', () => { targetX = 0; targetY = 0; startTick(); });
     }
-
-    /* Touch / gyroscope */
-    if (window.DeviceOrientationEvent && !disabled) {
-      window.addEventListener('deviceorientation', e => {
-        if (!isVisible) return;
-        const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
-        const beta  = Math.max(-45, Math.min(45, (e.beta  || 0) - 30));
-        targetY = (gamma / 45) * TILT_MAX * 0.5;
-        targetX = -(beta  / 45) * TILT_MAX * 0.5;
-        startTick();
-      });
-    }
   }
 
-  /* Itera le due card */
+  /* Init both cards */
   makeTiltCard('tilt-fivem', 'glare-fivem', false);
   makeTiltCard('tilt-csgo',  null,          true);
+
+  } // end !noMotion && !isTouch
 </script>
 <script>
   function setLang(lang) {
