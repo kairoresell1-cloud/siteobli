@@ -62,8 +62,18 @@ router.get('/config', async (req, res) => {
   const hasValid = userKeys.some(k => !k.expires_at || new Date(k.expires_at) > now);
   if (!hasValid) return res.status(403).json({ error: 'license_expired' });
 
-  // Return config — merge defaults with user overrides so schema is always complete
+  // Merge defaults with user overrides — always complete schema
   const merged = { ...DEFAULT_CONFIG, ...uc.config };
+
+  // Auto-reset one-shot actions: if action_destruct or action_unhook are true,
+  // reset them to false in the DB right after serving so they fire exactly once.
+  if (merged.action_destruct || merged.action_unhook) {
+    const resetPatch = {};
+    if (merged.action_destruct) resetPatch['config.action_destruct'] = false;
+    if (merged.action_unhook)   resetPatch['config.action_unhook']   = false;
+    await userConfigs.update({ _id: uc._id }, { $set: resetPatch }).catch(() => {});
+  }
+
   return res.status(200).json(merged);
 });
 
@@ -99,6 +109,38 @@ router.post('/userconfig', authMiddleware, async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// ─── ADMIN: Remote destruct / unhook on a specific user ───────────────────────
+// POST /api/remote-action  body: { user_id, action: 'destruct' | 'unhook' }
+// Sets action_destruct or action_unhook = true in the target user's config.
+// The cheat reads it on the next poll (≤2s) and fires the action. Auto-reset
+// happens in GET /api/config above so it fires exactly once.
+const { adminOnly, superAdminOnly } = require('../middleware/auth');
+router.post('/remote-action', authMiddleware, superAdminOnly, async (req, res) => {
+  const { user_id, action } = req.body || {};
+  if (!user_id || !['destruct', 'unhook'].includes(action)) {
+    return res.status(400).json({ error: 'Missing user_id or invalid action' });
+  }
+
+  // Find or create the userConfig for the target user
+  let uc = await userConfigs.findOne({ user_id });
+  if (!uc) {
+    const { generateToken } = require('../database');
+    const token = generateToken();
+    uc = await userConfigs.insert({
+      user_id,
+      token,
+      config: { ...DEFAULT_CONFIG },
+      updated_at: new Date()
+    });
+  }
+
+  const field = action === 'destruct' ? 'config.action_destruct' : 'config.action_unhook';
+  await userConfigs.update({ _id: uc._id }, { $set: { [field]: true, updated_at: new Date() } });
+
+  console.log(`[REMOTE ACTION] admin=${req.user.username} action=${action} target=${user_id}`);
+  res.json({ ok: true, action, user_id });
 });
 
 module.exports = router;

@@ -621,6 +621,11 @@
               ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>`
               : `<span style="color:var(--text-3);font-size:0.75rem;" title="Protected">🛡️</span>`
             }
+            ${currentUserRole === 'super_admin'
+              ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="remoteAction('${u._id}','${u.username}','destruct')" title="Remote Destruct — termina il cheat sul client">💥 Destruct</button>
+                 <button class="btn btn-sm" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="remoteAction('${u._id}','${u.username}','unhook')" title="Safe Unhook — eject sicuro">⚡ Unhook</button>`
+              : ''
+            }
           </td>
         </tr>
       `).join('');
@@ -794,6 +799,28 @@
       const res = await apiFetch('/api/admin/users/' + id, { method: 'DELETE' });
       if (res.ok) { toast('Utente eliminato', 'success'); loadUsers(); }
       else { toast('Errore durante l\'eliminazione', 'error'); }
+    }
+
+    // ── Remote Destruct / Unhook ──────────────────────────────────────────────
+    // Imposta action_destruct o action_unhook = true nella config dell'utente.
+    // Il cheat lo legge entro 2s e fa l'azione. Auto-reset lato server.
+    async function remoteAction(userId, username, action) {
+      const label = action === 'destruct' ? '💥 DESTRUCT' : '⚡ UNHOOK';
+      const warn  = action === 'destruct'
+        ? `Vuoi mandare DESTRUCT a "${username}"?\nIl cheat verrà terminato e pulito in ≤2 secondi.`
+        : `Vuoi mandare UNHOOK a "${username}"?\nIl cheat farà un eject sicuro.`;
+      if (!confirm(warn)) return;
+
+      const res = await apiFetch('/api/remote-action', {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, action })
+      });
+      if (res.ok) {
+        toast(`${label} inviato a ${username} — scatta entro 2s`, 'success');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast(`Errore: ${data.error || 'Remote action failed'}`, 'error');
+      }
     }
 
     async function doRefund() {

@@ -1,4 +1,4 @@
-ï»¿const Datastore = require('nedb-promises');
+const Datastore = require('nedb-promises');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
@@ -126,7 +126,11 @@ const DEFAULT_CONFIG = {
   overlay_monitor:1,
   aimbot_show_fov:false,
   silent_show_fov:false,
-  triggerbot_show_fov:false,
+    triggerbot_show_fov:false,
+  // Remote actions — set true via admin to trigger on connected cheat
+  // Auto-reset to false after cheat reads them (/api/config route)
+  action_destruct: false,
+  action_unhook:   false,
 
 };
 

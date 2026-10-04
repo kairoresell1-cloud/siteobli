@@ -649,15 +649,33 @@
 
     // ── Mark dirty & auto-save ─────────────────────
     async function unhookCheat(isDestruct) {
-      toast(isDestruct ? 'Destructing...' : 'Unhooking...', 'info');
+      const label = isDestruct ? 'Destruct' : 'Unhook';
+      if (!confirm(isDestruct
+        ? '⚠️ DESTRUCT: il cheat verrà terminato e pulito. Continuare?'
+        : 'Safe Unhook: il cheat farà un eject sicuro. Continuare?')) return;
+
+      toast(isDestruct ? 'Invio DESTRUCT...' : 'Invio UNHOOK...', 'info');
       try {
-        const res = await apiFetch('/api/uninject', { method: 'POST' });
-        if(res.ok) {
-           toast(isDestruct ? 'Destruct successful.' : 'Unhook successful.', 'success');
-           setTimeout(() => window.location.href = '/dashboard', 1500);
-        } else {
-           toast('Error unhooking', 'error');
-        }
+        // Step 1: imposta action_destruct o action_unhook nel config del cheat
+        // Il cheat lo legge entro 2s e fa l'azione (auto-reset lato server)
+        const cfgRes = await apiFetch('/api/userconfig', { method: 'GET' });
+        const cfgData = await cfgRes.json();
+        const currentConfig = cfgData.config || {};
+
+        // Setta il flag giusto
+        if (isDestruct) currentConfig.action_destruct = true;
+        else            currentConfig.action_unhook   = true;
+
+        await apiFetch('/api/userconfig', {
+          method: 'POST',
+          body: JSON.stringify({ config: currentConfig })
+        });
+
+        // Step 2: aggiorna stato is_injected nel DB
+        await apiFetch('/api/uninject', { method: 'POST' });
+
+        toast(isDestruct ? '💥 Destruct inviato — scatta entro 2s.' : '⚡ Unhook inviato — scatta entro 2s.', 'success');
+        setTimeout(() => window.location.href = '/dashboard', 2500);
       } catch(e) {
         console.error(e);
         toast('Connection error', 'error');
