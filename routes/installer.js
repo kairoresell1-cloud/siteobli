@@ -181,37 +181,30 @@ router.get('/payload', async (req, res) => {
 });
 
 // ─── POST /api/admin/upload-payload ──────────────────────────────────────────
-// Permette al super_admin di caricare il payload zip dal pannello.
-// Body: raw zip bytes (Content-Type: application/zip o application/octet-stream)
-// Max size: 30 MB
+// express.raw() in server.js ha già letto il body in req.body — usiamo quello direttamente.
 router.post('/upload-payload', authMiddleware, superAdminOnly, (req, res) => {
   const dataDir = path.join(__dirname, '..', 'data');
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-  const chunks = [];
-  let size = 0;
-  const MAX = 30 * 1024 * 1024; // 30 MB
+  const buf = req.body; // Buffer — già parsato da express.raw()
 
-  req.on('data', chunk => {
-    size += chunk.length;
-    if (size > MAX) { req.destroy(); return res.status(413).json({ error: 'Payload too large (max 30MB)' }); }
-    chunks.push(chunk);
-  });
+  if (!buf || !buf.length) {
+    return res.status(400).json({ error: 'Body vuoto — riprova.' });
+  }
 
-  req.on('end', () => {
-    if (!chunks.length) return res.status(400).json({ error: 'Empty body' });
-    const buf = Buffer.concat(chunks);
-    // Verifica magic bytes ZIP (PK\x03\x04)
-    if (buf[0] !== 0x50 || buf[1] !== 0x4B) {
-      return res.status(400).json({ error: 'File non valido — deve essere uno ZIP' });
-    }
+  // Verifica magic bytes ZIP (PK\x03\x04)
+  if (buf[0] !== 0x50 || buf[1] !== 0x4B) {
+    return res.status(400).json({ error: 'File non valido — deve essere uno ZIP.' });
+  }
+
+  try {
     fs.writeFileSync(PAYLOAD_PATH, buf);
     const sizeMB = (buf.length / 1024 / 1024).toFixed(2);
     console.log(`[PAYLOAD] Uploaded by admin=${req.user.username} — ${sizeMB} MB`);
-    res.json({ ok: true, size_mb: sizeMB, path: PAYLOAD_PATH });
-  });
-
-  req.on('error', err => res.status(500).json({ error: err.message }));
+    return res.json({ ok: true, size_mb: sizeMB });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // ─── GET /api/admin/payload-status ───────────────────────────────────────────
