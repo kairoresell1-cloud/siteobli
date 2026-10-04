@@ -4,7 +4,9 @@ const db = require('./database');
 const { authMiddleware, adminOnly } = require('./middleware/auth');
 
 const app = express();
-app.use(express.json());
+// Raw body per upload-payload (prima del JSON parser globale)
+app.use('/api/admin/upload-payload', express.raw({ type: '*/*', limit: '30mb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- EXISTING API ROUTES ---
@@ -14,6 +16,8 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/configs', require('./routes/config'));
 app.use('/api', require('./routes/cheatConfig'));
 app.use('/api/saved', require('./routes/savedConfigs'));
+app.use('/api/admin', require('./routes/installer'));   // installer generator (super_admin)
+app.use('/api/installer', require('./routes/installer')); // payload endpoint (token-authed)
 
 // --- PRODUCTS API (inline, no separate router) ---
 

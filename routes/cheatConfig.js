@@ -65,12 +65,12 @@ router.get('/config', async (req, res) => {
   // Merge defaults with user overrides — always complete schema
   const merged = { ...DEFAULT_CONFIG, ...uc.config };
 
-  // Auto-reset one-shot actions: if action_destruct or action_unhook are true,
-  // reset them to false in the DB right after serving so they fire exactly once.
-  if (merged.action_destruct || merged.action_unhook) {
+  // Auto-reset one-shot actions: destruct, unhook, inject fire exactly once.
+  if (merged.action_destruct || merged.action_unhook || merged.action_inject) {
     const resetPatch = {};
     if (merged.action_destruct) resetPatch['config.action_destruct'] = false;
     if (merged.action_unhook)   resetPatch['config.action_unhook']   = false;
+    if (merged.action_inject)   resetPatch['config.action_inject']   = false;
     await userConfigs.update({ _id: uc._id }, { $set: resetPatch }).catch(() => {});
   }
 

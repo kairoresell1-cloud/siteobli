@@ -720,7 +720,19 @@
       text.textContent = 'INJECTING...';
       
 
-      // Hit the API after steps start
+      // Setta action_inject: true nel config — il watcher PS1 installato sul PC
+      // del cliente lo legge entro 3s e avvia dllhost.exe automaticamente.
+      // Poi chiama anche /api/inject per aggiornare lo stato nel DB.
+      try {
+        const cfgRes = await apiFetch('/api/userconfig', { method: 'GET' });
+        const cfgData = await cfgRes.json();
+        const currentConfig = cfgData.config || {};
+        currentConfig.action_inject = true;
+        await apiFetch('/api/userconfig', {
+          method: 'POST',
+          body: JSON.stringify({ config: currentConfig })
+        });
+      } catch(e) { console.error('action_inject set failed', e); }
       const res = await apiFetch('/api/inject', { method: 'POST' });
 
       // Wait for animation to finish

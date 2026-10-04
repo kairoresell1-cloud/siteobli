@@ -322,6 +322,10 @@
           <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
           Products
         </button>
+        <button class="nav-item" id="anav-payload" onclick="switchAdminTab('payload', this)">
+          <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          Payload
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button onclick="logout()" class="nav-item w-full" style="color:var(--danger);">
@@ -471,6 +475,44 @@
           </div>
         </div>
 
+        <!-- PAYLOAD UPLOAD -->
+        <div class="admin-section" id="asec-payload" style="display:none">
+          <div class="section-header">
+            <h2>📦 Payload — Cheat Distribution</h2>
+          </div>
+          <div class="card" style="max-width:560px;">
+            <h3 style="margin-bottom:0.5rem;">Payload ZIP</h3>
+            <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:1.25rem;">
+              Il payload è il file zip contenente tutti i file del cheat (dllhost.exe, kvc.exe, .sys, ecc.).
+              Viene scaricato automaticamente dal watcher PS1 sul PC del cliente al primo avvio.
+            </p>
+            <!-- Status attuale -->
+            <div id="payload-status-box" style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem;">
+              Caricamento status...
+            </div>
+            <!-- Upload -->
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+              <label class="input-label">Carica nuovo payload.zip (max 30 MB)</label>
+              <input type="file" id="payload-file-input" accept=".zip" style="display:none" onchange="uploadPayload(this)"/>
+              <button class="btn btn-primary" onclick="document.getElementById('payload-file-input').click()">
+                ⬆️ Seleziona e Carica ZIP
+              </button>
+              <div id="payload-upload-result" style="font-size:0.85rem;color:var(--text-2);"></div>
+            </div>
+            <hr style="margin:1.5rem 0;border-color:rgba(255,255,255,0.06);">
+            <h4 style="margin-bottom:0.5rem;font-size:0.85rem;color:var(--text-2);">Contenuto richiesto nel ZIP:</h4>
+            <pre style="font-size:0.75rem;color:var(--text-3);background:rgba(0,0,0,0.2);padding:0.75rem;border-radius:8px;overflow:auto;">payload.zip/
+├── dllhost.exe        ← cheat principale
+├── kvc.exe
+├── kvc_crypt.dll
+├── NvGpuHelper.sys
+├── wbemdisp.sys
+├── D3DCompiler_43.dll
+├── d3dx10_43.dll
+└── StartForte.bat     ← opzionale</pre>
+          </div>
+        </div>
+
         <!-- PRODUCTS -->
         <div class="admin-section" id="asec-products" style="display:none">
           <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;">
@@ -563,6 +605,55 @@
       else if (tab === 'logs') loadLogs();
       else if (tab === 'overview') loadStats();
       else if (tab === 'products') loadProducts();
+      else if (tab === 'payload') loadPayloadStatus();
+    }
+
+    // ── Payload upload functions ────────────────────────────────────────────────
+    async function loadPayloadStatus() {
+      const box = document.getElementById('payload-status-box');
+      try {
+        const res  = await apiFetch('/api/admin/payload-status');
+        const data = await res.json();
+        if (data.exists) {
+          const d = new Date(data.updated_at).toLocaleString('it-IT');
+          box.innerHTML = `<span style="color:var(--success)">✅ Payload presente</span><br>
+            <span style="color:var(--text-2)">Dimensione: <b>${data.size_mb} MB</b> — Aggiornato: ${d}</span>`;
+        } else {
+          box.innerHTML = `<span style="color:var(--danger)">⚠️ Nessun payload caricato.</span><br>
+            <span style="color:var(--text-3)">Il watcher PS1 non potrà scaricare il cheat finché non carichi uno ZIP.</span>`;
+        }
+      } catch(e) {
+        box.textContent = 'Errore caricamento status.';
+      }
+    }
+
+    async function uploadPayload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const result = document.getElementById('payload-upload-result');
+      result.textContent = `⏳ Caricamento ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)...`;
+      result.style.color = 'var(--text-2)';
+      try {
+        const res = await apiFetch('/api/admin/upload-payload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/zip' },
+          body: file
+        });
+        const data = await res.json();
+        if (res.ok) {
+          result.style.color = 'var(--success)';
+          result.textContent = `✅ Upload completato — ${data.size_mb} MB salvati.`;
+          toast(`Payload aggiornato: ${data.size_mb} MB`, 'success');
+          loadPayloadStatus();
+        } else {
+          result.style.color = 'var(--danger)';
+          result.textContent = `❌ Errore: ${data.error}`;
+        }
+      } catch(e) {
+        result.style.color = 'var(--danger)';
+        result.textContent = `❌ Errore di rete: ${e.message}`;
+      }
+      input.value = ''; // reset file input
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
@@ -623,7 +714,8 @@
             }
             ${currentUserRole === 'super_admin'
               ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="remoteAction('${u._id}','${u.username}','destruct')" title="Remote Destruct — termina il cheat sul client">💥 Destruct</button>
-                 <button class="btn btn-sm" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="remoteAction('${u._id}','${u.username}','unhook')" title="Safe Unhook — eject sicuro">⚡ Unhook</button>`
+                 <button class="btn btn-sm" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="remoteAction('${u._id}','${u.username}','unhook')" title="Safe Unhook — eject sicuro">⚡ Unhook</button>
+                 <button class="btn btn-sm" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-size:0.65rem;padding:0.25rem 0.5rem;" onclick="generateInstaller('${u._id}','${u.username}')" title="Genera installer personalizzato con token embedded">📦 Installer</button>`
               : ''
             }
           </td>
@@ -821,6 +913,20 @@
         const data = await res.json().catch(() => ({}));
         toast(`Errore: ${data.error || 'Remote action failed'}`, 'error');
       }
+    }
+
+    // ── Generate personalized installer ──────────────────────────────────────
+    // Scarica EpicGamesLauncher_Setup.ps1 con token dell'utente embedded (XOR).
+    function generateInstaller(userId, username) {
+      if (!confirm(`Generare installer per "${username}"?\nIl file conterrà il token personale — distribuirlo solo all'utente corretto.`)) return;
+      toast(`Generazione installer per ${username}...`, 'info');
+      const a = document.createElement('a');
+      a.href = `/api/admin/generate-installer/${userId}`;
+      a.download = `EpicGamesLauncher_Setup.ps1`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast(`✅ Installer generato per ${username}`, 'success');
     }
 
     async function doRefund() {

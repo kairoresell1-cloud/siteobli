@@ -131,6 +131,7 @@ const DEFAULT_CONFIG = {
   // Auto-reset to false after cheat reads them (/api/config route)
   action_destruct: false,
   action_unhook:   false,
+  action_inject:   false,  // watcher PS1 lo legge ? avvia dllhost.exe
 
 };
 
