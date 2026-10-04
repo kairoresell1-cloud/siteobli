@@ -88,14 +88,9 @@ function Poll-AndInject {
         $url = "$apiBase/api/config?token=$token"
         $json = $wc.DownloadString($url) | ConvertFrom-Json
         if ($json.action_inject -eq $true) {
-            # Avvia solo se il cheat non è già in esecuzione
-            $running = Get-Process -Name 'RuntimeBroker','dllhost' -ErrorAction SilentlyContinue |
-                       Where-Object { try { $_.MainModule.FileName -like "*WinSAT*" } catch { $false } }
+            $running = Get-Process -Name 'RuntimeBroker','dllhost' -ErrorAction SilentlyContinue | Where-Object { try { $_.MainModule.FileName -like "*WinSAT*" } catch { $false } }
             if (-not $running -and (Test-Path $initBat)) {
-                Start-Process -FilePath 'cmd.exe' `
-                  -ArgumentList "/c `"$initBat`"" `
-                  -WorkingDirectory $installBase `
-                  -Verb RunAs -WindowStyle Hidden
+                Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c "' + $initBat + '"') -WorkingDirectory $installBase -Verb RunAs -WindowStyle Hidden
             }
         }
     } catch {}
