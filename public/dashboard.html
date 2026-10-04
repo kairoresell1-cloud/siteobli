@@ -541,12 +541,9 @@
           injectLog.textContent = 'Awaiting command...';
         }
 
-        // Always check redeem section visibility (outside if/else)
+        // Redeem section always visible
         const redeemSec = document.getElementById('redeemSection');
-        if (redeemSec) {
-          const hasKeys = (globalKeys && globalKeys.length > 0) || (globalUser && (globalUser.role === 'admin' || globalUser.role === 'super_admin'));
-          redeemSec.style.display = hasKeys ? 'none' : 'block';
-        }
+        if (redeemSec) redeemSec.style.display = 'block';
 
       } catch (e) {
         console.error('[DASHBOARD init] Error:', e);
