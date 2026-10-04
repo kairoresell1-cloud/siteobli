@@ -57,6 +57,8 @@ router.get('/users', async (req, res) => {
   const result = await Promise.all(allUsers.reverse().map(async u => {
     const { password_hash, password_plain, ...safe } = u;
     if (canSeePassword(u)) safe.password_plain = password_plain;
+    // Flag per il frontend: sa chi è il super owner senza esporre il nome dell'env var
+    safe.is_super_owner = checkTargetIsSuperOwner(u);
     const userKeys = await keys.find({ user_id: u._id });
     if (userKeys.length > 1) {
       return { ...safe, key_string: `[${userKeys.length} Keys]`, expires_at: null, key_status: 'multiple', key_id: null, game: 'multiple' };
@@ -73,6 +75,12 @@ router.post('/users', async (req, res) => {
   const { username, password, role } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Missing fields' });
 
+  // Admin può creare solo user — non altri admin o owner
+  if (req.user.role === 'admin' && role && role !== 'user') {
+    return res.status(403).json({ error: 'Admins can only create regular user accounts' });
+  }
+
+  // Solo super_admin può creare account Owner
   if (role === 'super_admin' && req.user.role !== 'super_admin') {
     return res.status(403).json({ error: 'Only an Owner can create Owner accounts' });
   }

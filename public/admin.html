@@ -196,7 +196,7 @@
           <label class="input-label">Role</label>
           <select class="input" id="cu-role">
             <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="admin" class="admin-hidden">Admin</option>
             <option value="super_admin" class="super-only" style="display:none;">Owner</option>
           </select>
         </div>
@@ -539,13 +539,14 @@
        if (currentUserRole === 'super_admin') {
          document.querySelectorAll('.super-only').forEach(el => el.style.display = '');
        }
-       // Admin può vedere solo Users e Keys — nasconde tutto il resto
+       // Admin: nasconde opzioni Admin e Owner dal dropdown create user
        if (currentUserRole === 'admin') {
+         document.querySelectorAll('.admin-hidden').forEach(el => el.style.display = 'none');
+         // Nasconde tab non autorizzati
          ['anav-overview','anav-logs','anav-refund','anav-products'].forEach(id => {
            const el = document.getElementById(id);
            if (el) el.style.display = 'none';
          });
-         // Apre direttamente Users
          const usersBtn = document.getElementById('anav-users');
          if (usersBtn) switchAdminTab('users', usersBtn);
        }
@@ -577,17 +578,20 @@
     }
 
     // ── Permission helpers ──────────────────────────
+    // is_super_owner viene dal server (true se è il super owner dell'env)
     // admin       → solo user
-    // owner       → user + admin + altri owner (non super owner — backend blocca)
-    // super owner → tutto tranne se stesso (backend blocca)
-    function canEdit(myRole, targetRole) {
-      if (myRole === 'admin')       return targetRole === 'user';
-      if (myRole === 'super_admin') return true; // owner può toccare tutti, backend protegge super owner
+    // owner       → user + admin + altri owner NON super owner
+    // super owner → tutti (backend blocca se stesso)
+    function canEdit(myRole, targetUser) {
+      if (targetUser.is_super_owner) return myRole === 'super_admin' && false; // mai modificabile da altri
+      if (myRole === 'admin')        return targetUser.role === 'user';
+      if (myRole === 'super_admin')  return true;
       return false;
     }
-    function canDelete(myRole, targetRole) {
-      if (myRole === 'admin')       return targetRole === 'user';
-      if (myRole === 'super_admin') return true; // owner può eliminare tutti, backend protegge super owner
+    function canDelete(myRole, targetUser) {
+      if (targetUser.is_super_owner) return false; // mai eliminabile
+      if (myRole === 'admin')        return targetUser.role === 'user';
+      if (myRole === 'super_admin')  return true;
       return false;
     }
 
@@ -609,11 +613,11 @@
           <td><span class="badge ${u.is_online ? 'badge-success' : 'badge-danger'}">${u.is_online ? 'Online' : 'Offline'}</span></td>
           <td><span class="badge ${u.is_injected ? 'badge-violet' : 'badge-warning'}">${u.is_injected ? 'Yes' : 'No'}</span></td>
           <td class="action-cell">
-            ${canEdit(currentUserRole, u.role)
+            ${canEdit(currentUserRole, u)
               ? `<button class="btn btn-ghost btn-sm" onclick="openEditUser('${u._id}')">Edit</button>`
               : `<span style="color:var(--text-3);font-size:0.75rem;" title="No permission">🔒</span>`
             }
-            ${canDelete(currentUserRole, u.role)
+            ${canDelete(currentUserRole, u)
               ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u._id}', '${u.username}')">Delete</button>`
               : `<span style="color:var(--text-3);font-size:0.75rem;" title="Protected">🛡️</span>`
             }

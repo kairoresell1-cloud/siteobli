@@ -264,6 +264,283 @@
     .discord-logo { width: 28px; height: 28px; flex-shrink: 0; }
     .support-note { margin-top: 1.5rem; color: var(--text3); font-size: .82rem; line-height: 1.6; }
 
+    /* ========= PRODUCT CARDS 3D ========= */
+    /* ── Config variables (easy to tweak) ── */
+    :root {
+      --prod-price: "€19.99";       /* Prezzo FiveM */
+      --prod-discord-url: "https://discord.gg/oblivion"; /* Link Discord */
+      --tilt-intensity: 14deg;      /* Rotazione max tilt */
+      --tilt-spring: 0.09;          /* Inerzia (0.05=lento, 0.15=scattante) */
+      --border-speed: 4s;           /* Velocità luce perimetrale */
+    }
+
+    /* @property per animazione conic-gradient */
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    #products { text-align: center; }
+
+    .prod-arena {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      align-items: stretch;
+      perspective: 1200px;
+      perspective-origin: 50% 40%;
+      margin: 2.5rem auto 0;
+      max-width: 900px;
+      padding: 0 1rem;
+    }
+
+    /* Wrapper per il tilt — riceve il transform */
+    .prod-tilt {
+      flex: 1;
+      max-width: 400px;
+      transform-style: preserve-3d;
+      will-change: transform;
+      border-radius: 24px;
+    }
+
+    /* Card base */
+    .prod-card {
+      position: relative;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 24px;
+      padding: 2.4rem 2rem 2rem;
+      text-align: left;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      cursor: pointer;
+      transition: box-shadow 0.3s;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .prod-card:hover { box-shadow: 0 24px 60px rgba(124,58,237,0.18); }
+
+    /* ── Luce perimetrale animata (conic-gradient) ── */
+    .prod-card--active::before,
+    .prod-card--active::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 26px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .prod-card--active::before {
+      background: conic-gradient(from var(--angle),
+        transparent 0deg,
+        transparent 60deg,
+        #06B6D4 90deg,
+        #7C3AED 160deg,
+        #a855f7 200deg,
+        transparent 240deg,
+        transparent 360deg
+      );
+      animation: spin-border var(--border-speed) linear infinite;
+      filter: blur(3px);
+      opacity: 0.75;
+    }
+    .prod-card--active::after {
+      background: conic-gradient(from var(--angle),
+        transparent 0deg,
+        transparent 65deg,
+        rgba(6,182,212,0.6) 90deg,
+        rgba(124,58,237,0.5) 160deg,
+        transparent 240deg,
+        transparent 360deg
+      );
+      animation: spin-border var(--border-speed) linear infinite;
+      /* Mask: mostra solo il bordo */
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      padding: 2px;
+    }
+    @keyframes spin-border {
+      to { --angle: 360deg; }
+    }
+
+    /* Sfondo interno della card sopra i pseudo-elementi */
+    .prod-card__inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Radial glow che segue il mouse */
+    .prod-card__glare {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.3s;
+      background: radial-gradient(circle at 50% 50%,
+        rgba(255,255,255,0.08) 0%,
+        transparent 65%
+      );
+    }
+    .prod-tilt:hover .prod-card__glare { opacity: 1; }
+
+    /* ── Parallasse layer ── */
+    .prod-card__badge {
+      transform: translateZ(28px);
+      align-self: flex-start;
+      margin-bottom: 1.4rem;
+    }
+    .prod-card__title {
+      font-size: 1.6rem; font-weight: 900; letter-spacing: 0.04em;
+      transform: translateZ(22px);
+      background: var(--grad);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+    }
+    .prod-card__sub {
+      font-size: 0.8rem; color: var(--text3);
+      transform: translateZ(14px);
+      margin-bottom: 1.6rem;
+    }
+    .prod-card__features {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 0.55rem;
+      transform: translateZ(10px);
+      margin-bottom: auto;
+    }
+    .prod-card__features li {
+      font-size: 0.82rem; color: var(--text2);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .prod-card__features li::before {
+      content: '✓'; color: #06B6D4; font-weight: 800; font-size: 0.75rem;
+    }
+
+    /* ── Bottoni hover ── */
+    .prod-card__actions {
+      display: flex; flex-direction: column; gap: 0.7rem;
+      margin-top: 1.8rem;
+      transform: translateZ(30px);
+    }
+    /* Su desktop nasconde e fa slide-up */
+    @media (hover: hover) {
+      .prod-card__actions {
+        opacity: 0;
+        transform: translateZ(30px) translateY(14px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+      .prod-tilt:hover .prod-card__actions {
+        opacity: 1;
+        transform: translateZ(30px) translateY(0);
+      }
+    }
+
+    .prod-btn-price {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid rgba(124,58,237,0.5);
+      background: rgba(124,58,237,0.06);
+      color: var(--text2); border-radius: 12px;
+      font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em;
+      cursor: default; pointer-events: none;
+    }
+    .prod-btn-purchase {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.9rem 1.5rem;
+      background: linear-gradient(135deg, #7C3AED, #06B6D4);
+      color: #fff; text-decoration: none; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em;
+      box-shadow: 0 0 24px rgba(124,58,237,0.35);
+      transition: box-shadow 0.2s, filter 0.2s;
+    }
+    .prod-btn-purchase:hover { box-shadow: 0 0 40px rgba(124,58,237,0.6); filter: brightness(1.1); }
+    .prod-btn-purchase:focus-visible {
+      outline: 2px solid #06B6D4; outline-offset: 3px;
+    }
+
+    /* ── CSGO card disabled ── */
+    .prod-tilt--disabled { cursor: not-allowed; }
+    .prod-card--disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .prod-card--disabled * { pointer-events: none; }
+    .prod-card__title--strike { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.3); }
+
+    .prod-soon-badge {
+      display: inline-block;
+      padding: 0.25rem 0.7rem;
+      background: rgba(255,160,0,0.12);
+      border: 1px solid rgba(255,160,0,0.35);
+      color: #fbbf24; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .prod-active-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .prod-active-badge::before {
+      content: ''; display: inline-block;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* ── Testo sotto le card ── */
+    .prod-footer {
+      margin-top: 2.5rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .prod-footer.visible { opacity: 1; transform: none; }
+    .prod-footer__title {
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .prod-footer__sub { font-size: 0.82rem; color: var(--text3); }
+    .prod-footer svg { width: 18px; height: 18px; fill: #5865F2; flex-shrink: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .prod-arena { flex-direction: column; align-items: center; }
+      .prod-tilt { max-width: 100%; width: 100%; }
+      /* Su touch: bottoni sempre visibili */
+      .prod-card__actions {
+        opacity: 1 !important;
+        transform: translateZ(30px) translateY(0) !important;
+      }
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      .prod-card--active::before,
+      .prod-card--active::after { animation: none; }
+      .prod-tilt { transform: none !important; transition: none !important; }
+      .prod-active-badge::before { animation: none; }
+    }
+
     /* ========= FOOTER ========= */
     footer { position: relative; z-index: 1; text-align: center; padding: 2.5rem 2rem; color: var(--text3); font-size: .8rem; border-top: 1px solid var(--border); }
     footer strong { color: var(--text2); }
@@ -842,21 +1119,90 @@
     </div>
   </section>
 
-  <!-- ===== SUPPORT ===== -->
-  <section class="section" id="support">
+  <!-- ===== PRODUCTS ===== -->
+  <section class="section" id="products">
     <div class="section-inner">
-      <div class="s-label reveal">Community</div>
-      <h2 class="s-title reveal">24/7 <span class="grad-text">Support</span></h2>
-      <div class="support-card reveal">
-        <h3>Need Help or Want to Buy?</h3>
-        <p class="support-note">Join our official Discord server to purchase access, get technical support, or chat with the community.</p>
-        <a href="https://discord.gg/oblivion" class="discord-btn" target="_blank">
-          <svg class="discord-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36">
-            <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
-          </svg>
-          Join Discord
-        </a>
+      <div class="s-label reveal">Products</div>
+      <h2 class="s-title reveal">Choose Your <span class="grad-text">Weapon</span></h2>
+
+      <div class="prod-arena">
+
+        <!-- ── CARD 1: FiveM (attiva) ── -->
+        <div class="prod-tilt" id="tilt-fivem" tabindex="0" role="article" aria-label="FiveM External product">
+          <div class="prod-card prod-card--active">
+            <div class="prod-card__glare" id="glare-fivem"></div>
+            <div class="prod-card__inner">
+
+              <div class="prod-card__badge">
+                <span class="prod-active-badge">Live</span>
+              </div>
+
+              <div class="prod-card__title">FiveM External</div>
+              <div class="prod-card__sub">
+                <span class="en">GTA V / FiveM — External kernel-level cheat</span>
+                <span class="it">GTA V / FiveM — Cheat esterno kernel-level</span>
+              </div>
+
+              <ul class="prod-card__features">
+                <li><span class="en">Aimbot with bone selection & FOV control</span><span class="it">Aimbot con selezione bone & FOV</span></li>
+                <li><span class="en">ESP — boxes, health, names, distance</span><span class="it">ESP — box, salute, nomi, distanza</span></li>
+                <li><span class="en">Triggerbot — 0 ms reaction</span><span class="it">Triggerbot — 0 ms di reazione</span></li>
+                <li><span class="en">Ring 0 injection — bypasses custom AC</span><span class="it">Iniezione Ring 0 — bypassa gli AC custom</span></li>
+                <li><span class="en">No Secure Boot required</span><span class="it">Nessun Secure Boot richiesto</span></li>
+              </ul>
+
+              <div class="prod-card__actions">
+                <!-- Prezzo — modifica la variabile JS PROD_PRICE per cambiarlo -->
+                <div class="prod-btn-price" aria-label="Price">💰 &nbsp;<span id="fivem-price-label">€19.99</span> &nbsp;/ month</div>
+                <!-- Purchase → rimanda al Discord per completare l'acquisto -->
+                <a href="https://discord.gg/oblivion" target="_blank" class="prod-btn-purchase" rel="noopener">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36" fill="#fff" style="flex-shrink:0"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+                  Purchase on Discord
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CARD 2: CS:GO (coming soon, disabilitata) ── -->
+        <div class="prod-tilt prod-tilt--disabled" id="tilt-csgo" aria-disabled="true" role="article" aria-label="CS2 / CS:GO — Coming Soon">
+          <div class="prod-card prod-card--disabled">
+            <div class="prod-card__inner">
+
+              <div class="prod-card__badge">
+                <span class="prod-soon-badge">Coming Soon</span>
+              </div>
+
+              <div class="prod-card__title prod-card__title--strike">CS2 / CS:GO</div>
+              <div class="prod-card__sub">
+                <span class="en">Counter-Strike 2 — In development</span>
+                <span class="it">Counter-Strike 2 — In sviluppo</span>
+              </div>
+
+              <ul class="prod-card__features">
+                <li><span class="en">Advanced aimbot & triggerbot</span><span class="it">Aimbot avanzato & triggerbot</span></li>
+                <li><span class="en">ESP — full entity awareness</span><span class="it">ESP — awareness entità completa</span></li>
+                <li><span class="en">Backtrack & resolver</span><span class="it">Backtrack & resolver</span></li>
+                <li><span class="en">Kernel-level bypass</span><span class="it">Bypass kernel-level</span></li>
+                <li><span class="en">VAC & Faceit undetected</span><span class="it">Undetected VAC & Faceit</span></li>
+              </ul>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- .prod-arena -->
+
+      <!-- Testo sotto le card -->
+      <div class="prod-footer" id="prodFooter">
+        <div class="prod-footer__title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-19.32-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Purchase on Discord
+        </div>
+        <div class="prod-footer__sub">Join our Discord server to complete your purchase and get instant access.</div>
       </div>
+
     </div>
   </section>
 
@@ -973,6 +1319,138 @@
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── prod-footer fade-in ──
+  const footerObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.3 });
+  const pf = document.getElementById('prodFooter');
+  if (pf) footerObs.observe(pf);
+
+</script>
+
+<!-- ======= 3D TILT ENGINE ======= -->
+<script>
+  /* ── Config (cambia qui) ── */
+  const PROD_PRICE       = '€19.99';          // Prezzo FiveM
+  const PROD_DISCORD_URL = 'https://discord.gg/oblivion'; // Link acquisto
+  const TILT_MAX         = 13;                // Gradi rotazione max
+  const TILT_SPRING      = 0.09;              // Inerzia (0.05=lento, 0.15=veloce)
+  const TILT_SCALE_HOVER = 1.028;             // Scale su hover
+
+  /* Aggiorna il prezzo a runtime */
+  const pl = document.getElementById('fivem-price-label');
+  if (pl) pl.textContent = PROD_PRICE;
+
+  /* Rispetta prefers-reduced-motion */
+  const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (noMotion) return; // stop everything below
+
+  /* ── Tilt state per card ── */
+  function makeTiltCard(wrapperId, glareId, disabled) {
+    const wrap   = document.getElementById(wrapperId);
+    if (!wrap) return;
+    const glare  = glareId ? document.getElementById(glareId) : null;
+
+    let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+    let targetScale = 1, currentScale = 1;
+    let isHovered = false;
+    let rafId = null;
+    let isVisible = false;
+
+    /* IntersectionObserver: stoppa rAF fuori vista */
+    const visObs = new IntersectionObserver(([e]) => {
+      isVisible = e.isIntersecting;
+      if (isVisible) tick();
+      else if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }, { threshold: 0.1 });
+    visObs.observe(wrap);
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function tick() {
+      currentX     = lerp(currentX, targetX, TILT_SPRING);
+      currentY     = lerp(currentY, targetY, TILT_SPRING);
+      currentScale = lerp(currentScale, targetScale, TILT_SPRING * 1.4);
+
+      wrap.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg) scale(${currentScale})`;
+
+      /* Glare segue il cursore */
+      if (glare && isHovered) {
+        const normX = (targetY / TILT_MAX) * 50 + 50; // percentuale X
+        const normY = (-targetX / TILT_MAX) * 50 + 50; // percentuale Y
+        glare.style.background = `radial-gradient(circle at ${normX}% ${normY}%, rgba(255,255,255,0.10) 0%, transparent 60%)`;
+      }
+
+      const atRest = Math.abs(currentX) < 0.01 && Math.abs(currentY) < 0.01 && Math.abs(currentScale - 1) < 0.001;
+      if (!atRest || isHovered) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = null;
+      }
+    }
+
+    function startTick() { if (!rafId && isVisible) rafId = requestAnimationFrame(tick); }
+
+    if (!disabled) {
+      wrap.addEventListener('mousemove', e => {
+        const rect = wrap.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width  / 2); // -1..1
+        const dy = (e.clientY - cy) / (rect.height / 2); // -1..1
+        targetX = -dy * TILT_MAX;
+        targetY =  dx * TILT_MAX;
+        startTick();
+      });
+
+      wrap.addEventListener('mouseenter', () => {
+        isHovered = true;
+        targetScale = TILT_SCALE_HOVER;
+        startTick();
+      });
+
+      wrap.addEventListener('mouseleave', () => {
+        isHovered = false;
+        targetX = 0; targetY = 0; targetScale = 1;
+        startTick();
+        if (glare) glare.style.opacity = '0';
+      });
+
+      /* Focus da tastiera */
+      wrap.addEventListener('focus', () => { targetScale = TILT_SCALE_HOVER; startTick(); });
+      wrap.addEventListener('blur',  () => { targetX = 0; targetY = 0; targetScale = 1; startTick(); });
+    } else {
+      /* Card disabled: tilt leggero solo col mouse, no scale */
+      wrap.addEventListener('mousemove', e => {
+        const rect = wrap.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width  / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+        targetX = -dy * TILT_MAX * 0.35;
+        targetY =  dx * TILT_MAX * 0.35;
+        startTick();
+      });
+      wrap.addEventListener('mouseleave', () => { targetX = 0; targetY = 0; startTick(); });
+    }
+
+    /* Touch / gyroscope */
+    if (window.DeviceOrientationEvent && !disabled) {
+      window.addEventListener('deviceorientation', e => {
+        if (!isVisible) return;
+        const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+        const beta  = Math.max(-45, Math.min(45, (e.beta  || 0) - 30));
+        targetY = (gamma / 45) * TILT_MAX * 0.5;
+        targetX = -(beta  / 45) * TILT_MAX * 0.5;
+        startTick();
+      });
+    }
+  }
+
+  /* Itera le due card */
+  makeTiltCard('tilt-fivem', 'glare-fivem', false);
+  makeTiltCard('tilt-csgo',  null,          true);
 </script>
 <script>
   function setLang(lang) {
