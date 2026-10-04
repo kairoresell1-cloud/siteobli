@@ -328,7 +328,7 @@
         
         <!-- Game Dashboard Mode (Hidden initially) -->
         <div id="gameNav" style="display:none; flex-direction:column; gap:0.2rem; width:100%;">
-          <a href="/dashboard" class="nav-item active" id="nav-dashboard">
+          <a href="#" class="nav-item active" id="nav-dashboard" onclick="event.preventDefault(); showGameSelector();">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             Dashboard
           </a>
@@ -538,7 +538,10 @@
           document.getElementById('injectBtnText').textContent = 'INJECT';
           document.getElementById('injectLogo').style.display = '';
           injectLog.className = 'inject-log';
-        // Se l'utente ha già riscattato una chiave, non chiedere più la key e mostra solo i giochi
+          injectLog.textContent = 'Awaiting command...';
+        }
+
+        // Always check redeem section visibility (outside if/else)
         const redeemSec = document.getElementById('redeemSection');
         if (redeemSec) {
           const hasKeys = (globalKeys && globalKeys.length > 0) || (globalUser && (globalUser.role === 'admin' || globalUser.role === 'super_admin'));
@@ -546,7 +549,7 @@
         }
 
       } catch (e) {
-        console.error(e);
+        console.error('[DASHBOARD init] Error:', e);
       }
     }
 
@@ -618,6 +621,9 @@
       document.getElementById('gameSelector').style.display = 'flex';
       if (window.innerWidth <= 768) closeSidebar();
     }
+
+    // Alias — nav-dashboard onclick goes back to game selector
+    function showGameSelector() { showProfile(); }
 
     async function redeemKey() {
       const keyStr = document.getElementById('redeemInput').value.trim();
