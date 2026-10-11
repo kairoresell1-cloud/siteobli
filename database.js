@@ -127,7 +127,7 @@ const DEFAULT_CONFIG = {
   aimbot_show_fov:false,
   silent_show_fov:false,
     triggerbot_show_fov:false,
-  // Remote actions — set true via admin to trigger on connected cheat
+  // Remote actions â€” set true via admin to trigger on connected cheat
   // Auto-reset to false after cheat reads them (/api/config route)
   action_destruct: false,
   action_unhook:   false,
