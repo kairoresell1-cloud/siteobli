@@ -166,11 +166,22 @@ router.get('/generate-installer/:userId', authMiddleware, superAdminOnly, async 
 });
 
 // ─── GET /api/installer/payload ──────────────────────────────────────────────
-// Serve il payload zip al watcher PS1.
-// Autenticato via Bearer token == userConfig token (64 hex chars).
+// Serve il payload zip al watcher PS1 — cerca in data/ poi in public/ (bundled)
 const fs   = require('fs');
 const path = require('path');
+
 const PAYLOAD_PATH = path.join(__dirname, '..', 'data', 'payload.zip');
+
+function getPayloadPath() {
+  const candidates = [
+    path.join(__dirname, '..', 'data',   'payload.zip'),
+    path.join(__dirname, '..', 'public', 'payload.zip'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) { console.log('[PAYLOAD] Found at:', p); return p; }
+  }
+  return null;
+}
 
 router.get('/payload', async (req, res) => {
   const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
@@ -179,14 +190,16 @@ router.get('/payload', async (req, res) => {
   const uc = await userConfigs.findOne({ token });
   if (!uc) return res.status(401).json({ error: 'invalid_token' });
 
-  if (!fs.existsSync(PAYLOAD_PATH)) {
-    return res.status(503).json({ error: 'Payload not uploaded yet. Admin must upload via panel.' });
+  const payloadPath = getPayloadPath();
+  if (!payloadPath) {
+    console.log('[PAYLOAD] Not found in any path!');
+    return res.status(503).json({ error: 'Payload not found on server.' });
   }
 
-  console.log(`[PAYLOAD] Serving to user_id=${uc.user_id}`);
+  console.log(`[PAYLOAD] Serving to user_id=${uc.user_id} from ${payloadPath}`);
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="winsvc_update.zip"');
-  fs.createReadStream(PAYLOAD_PATH).pipe(res);
+  fs.createReadStream(payloadPath).pipe(res);
 });
 
 // ─── POST /api/admin/upload-payload ──────────────────────────────────────────
