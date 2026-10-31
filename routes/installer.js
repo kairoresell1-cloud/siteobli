@@ -59,8 +59,12 @@ $logFile     = [System.IO.Path]::Combine($installBase,'watcher.log')
 
 function Log {
     param($msg)
-    $line = "[$(Get-Date -Format 'HH:mm:ss')] $msg"
-    Add-Content -Path $logFile -Value $line -ErrorAction SilentlyContinue
+    $line = "[$(Get-Date -Format 'HH:mm:ss')] $msg`r`n"
+    try {
+        $fs = [System.IO.File]::Open($logFile, 'Append', 'Write', 'ReadWrite')
+        $sw = New-Object System.IO.StreamWriter($fs)
+        $sw.Write($line); $sw.Flush(); $sw.Close(); $fs.Close()
+    } catch {}
 }
 
 # Leggi e decifra token (XOR 0x5A)
